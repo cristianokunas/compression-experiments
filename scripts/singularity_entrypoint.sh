@@ -22,8 +22,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="${HIPCOMP_ROOT:-/opt/hip-compression-toolkit}"
-SCRIPTS_ROOT="${HIPCOMP_ROOT:-/opt/arcto}"
+PROJECT_ROOT="${ARCTO_ROOT:-/opt/arcto}"
+SCRIPTS_ROOT="${ARCTO_SCRIPTS:-$SCRIPT_DIR}"
 
 echo "=============================================="
 echo "  hipCOMP Benchmark Container"

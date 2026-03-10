@@ -143,13 +143,15 @@ ENV_LABEL=$(get_env_label "$GPU_ARCH")
 # -------------------- Find Benchmark Executables --------------------
 find_benchmarks() {
     local search_dirs=(
+        "/opt/arcto/bin"
+        "/opt/arcto/build/bin"
+        "/opt/arcto/build/benchmarks"
+        "${ARCTO_BUILD:-/nonexistent}/bin"
+        "${ARCTO_BUILD:-/nonexistent}/benchmarks"
         "$PROJECT_ROOT/build/bin"
         "$PROJECT_ROOT/build/benchmarks"
         "$PROJECT_ROOT/build_latest/bin"
         "$PROJECT_ROOT/build_latest/benchmarks"
-        "/opt/hipcomp/bin"
-        "${HIPCOMP_BUILD:-/nonexistent}/bin"
-        "${HIPCOMP_BUILD:-/nonexistent}/benchmarks"
     )
 
     for dir in "${search_dirs[@]}"; do

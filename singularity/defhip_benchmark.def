@@ -49,10 +49,10 @@ From: ubuntu:24.04
     cd /opt
     git clone https://github.com/cristianokunas/compression-experiments.git
     
-    rm -rf /opt/hip-compression-toolkit
+    rm -rf /opt/hip-compression-toolkit /opt/arcto
     git clone --branch "$BRANCH" --single-branch --depth 1 \
-        https://github.com/cristianokunas/hip-compression-toolkit.git
-    cd hip-compression-toolkit
+        https://github.com/cristianokunas/hip-compression-toolkit.git arcto
+    cd arcto
     mkdir -p build && cd build
 
     # Determine wave size flag for RDNA3
@@ -61,7 +61,7 @@ From: ubuntu:24.04
         WAVE32_FLAG="-DUSE_WARPSIZE_32=ON"
     fi
 
-    echo "Building hip-compression-toolkit for $GPU_ARCH ..."
+    echo "Building Arcto for $GPU_ARCH ..."
     CMAKE_PREFIX_PATH=/opt/rocm/lib/cmake cmake .. \
         -DCMAKE_HIP_ARCHITECTURES="$GPU_ARCH" \
         -DCMAKE_BUILD_TYPE=Release \
