@@ -2,6 +2,9 @@
 images/*.sif
 testdata/*.bin
 
+# Hipify generated files (regenerate with scripts/hipify_nvcomp.sh)
+hipify-output/nvcomp-hipified/
+
 # Build artifacts
 build/
 
