@@ -1,0 +1,22 @@
+# Binários grandes
+images/*.sif
+testdata/*.bin
+
+# Build artifacts
+build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
