@@ -41,12 +41,14 @@ show_help() {
     cat << 'EOF'
 Run hipCOMP benchmarks inside a Singularity container.
 
-Usage: run_singularity.sh <image.sif> <rsf_dir> [BENCHMARK_OPTIONS...]
+Usage: run_singularity.sh <image.sif> [rsf_dir] [BENCHMARK_OPTIONS...]
 
 ARGUMENTS:
     image.sif       Path to the Singularity image (built with build_singularity.sh)
-    rsf_dir         Path to RSF data directory (e.g., fletcher-io/original/run)
-                    Must contain a 'large/' subdirectory with TTI.rsf
+    rsf_dir         (Optional) Path to RSF data directory (e.g., fletcher-io/original/run)
+                    Must contain a 'large/' subdirectory with TTI.rsf.
+                    If omitted, only synthetic test data is generated (TTI files
+                    already present in testdata/ are used as-is).
 
 BENCHMARK OPTIONS (forwarded to run_benchmarks_auto.sh):
     -a, --algorithms ALGOS   Algorithms to test (default: "lz4 snappy cascaded")
@@ -62,11 +64,14 @@ ENVIRONMENT VARIABLES:
     EXTRA_BINDS     Additional --bind arguments (space-separated)
 
 EXAMPLES:
-    # Basic run — results saved to ./results/
+    # With RSF — generates/updates TTI data and runs benchmarks
     ./scripts/run_singularity.sh hipcomp_gfx942.sif /data/fletcher-io/original/run
 
-    # Multiple chunk sizes, 20 iterations
-    ./scripts/run_singularity.sh hipcomp_gfx942.sif /data/rsf -i 20 -p "65536 1048576 16777216"
+    # Without RSF — uses existing testdata/ (generates missing synthetic files only)
+    ./scripts/run_singularity.sh hipcomp_gfx942.sif
+
+    # Multiple chunk sizes, 20 iterations (no RSF needed)
+    ./scripts/run_singularity.sh hipcomp_gfx942.sif -i 20 -p "65536 1048576 16777216"
 
     # Custom results directory
     RESULTS_DIR=/tmp/bench_results ./scripts/run_singularity.sh hipcomp_gfx942.sif /data/rsf
@@ -90,14 +95,12 @@ if [ "$1" = "--help-benchmark" ]; then
     exit 0
 fi
 
-if [ $# -lt 1 ]; then
-    print_error "Missing RSF directory argument"
-    show_help
-    exit 1
+# RSF dir is optional — detect it only if the next arg is a directory (not a flag)
+RSF_DIR=""
+if [ $# -gt 0 ] && [[ "$1" != -* ]] && [ -d "$1" ]; then
+    RSF_DIR="$1"
+    shift
 fi
-
-RSF_DIR="$1"
-shift
 
 # Remaining args are forwarded to run_benchmarks_auto.sh
 BENCH_ARGS=("$@")
@@ -109,14 +112,16 @@ if [ ! -f "$SIF_IMAGE" ]; then
     exit 1
 fi
 
-RSF_DIR_ABS="$(cd "$RSF_DIR" 2>/dev/null && pwd)" || {
-    print_error "RSF directory not found: $RSF_DIR"
-    exit 1
-}
-
-if [ ! -d "$RSF_DIR_ABS/large" ]; then
-    print_warn "No 'large/' subdirectory in $RSF_DIR_ABS"
-    print_warn "The benchmark requires large RSF data for representative test generation"
+RSF_DIR_ABS=""
+if [ -n "$RSF_DIR" ]; then
+    RSF_DIR_ABS="$(cd "$RSF_DIR" && pwd)" || {
+        print_error "RSF directory not found: $RSF_DIR"
+        exit 1
+    }
+    if [ ! -d "$RSF_DIR_ABS/large" ]; then
+        print_warn "No 'large/' subdirectory in $RSF_DIR_ABS"
+        print_warn "The benchmark requires large RSF data for representative test generation"
+    fi
 fi
 
 # -------------------- Setup Bind Mounts --------------------
@@ -130,10 +135,12 @@ mkdir -p "$TESTDATA_DIR"
 TESTDATA_DIR_ABS="$(cd "$TESTDATA_DIR" && pwd)"
 
 BIND_ARGS=(
-    "--bind" "$RSF_DIR_ABS:/data/rsf:ro"
     "--bind" "$RESULTS_DIR_ABS:/data/results"
     "--bind" "$TESTDATA_DIR_ABS:/data/testdata"
 )
+if [ -n "$RSF_DIR_ABS" ]; then
+    BIND_ARGS+=("--bind" "$RSF_DIR_ABS:/data/rsf:ro")
+fi
 
 # Add any extra user-specified binds
 if [ -n "$EXTRA_BINDS" ]; then
@@ -149,7 +156,11 @@ echo -e "${BOLD}  hipCOMP Singularity Benchmark Runner${NC}"
 echo -e "${BOLD}============================================${NC}"
 echo ""
 print_info "Image:     $SIF_IMAGE"
-print_info "RSF data:  $RSF_DIR_ABS -> /data/rsf"
+if [ -n "$RSF_DIR_ABS" ]; then
+    print_info "RSF data:  $RSF_DIR_ABS -> /data/rsf"
+else
+    print_info "RSF data:  (none — using existing testdata/)"
+fi
 print_info "Results:   $RESULTS_DIR_ABS -> /data/results"
 print_info "Test data: $TESTDATA_DIR_ABS -> /data/testdata"
 if [ ${#BENCH_ARGS[@]} -gt 0 ]; then
@@ -161,10 +172,13 @@ echo ""
 print_info "Starting benchmarks..."
 echo ""
 
+RSF_ARG=()
+[ -n "$RSF_DIR_ABS" ] && RSF_ARG=(-r /data/rsf)
+
 $CONTAINER_RUNTIME run --rocm \
     "${BIND_ARGS[@]}" \
     "$SIF_IMAGE" \
-    -r /data/rsf \
+    "${RSF_ARG[@]}" \
     -d /data/testdata \
     -o /data/results \
     "${BENCH_ARGS[@]}"
