@@ -1,0 +1,18 @@
+== Bulk transfer (single hipMemcpy) ==
+--- 100 MB ---
+H2D pageable                        14.22 GB/s
+H2D pinned (Default)                26.98 GB/s
+D2H pageable                        14.38 GB/s
+D2H pinned (Default)                28.52 GB/s
+--- 686 MB ---
+H2D pageable                        16.47 GB/s
+H2D pinned (Default)                27.60 GB/s
+D2H pageable                        16.72 GB/s
+D2H pinned (Default)                28.16 GB/s
+
+== Chunked transfer pattern (1600 x 64KB on 100 MB) ==
+loop 1600 x 64KB scattered pageable (current bench)    16.60 ms    6.32 GB/s
+loop 1600 x 64KB scattered, pinned destination only    16.57 ms    6.33 GB/s
+single 100MB pageable -> device                        6.42 ms   16.34 GB/s
+single 100MB pinned -> device                          3.86 ms   27.18 GB/s
+loop 1600 x 64KB sliced pinned -> device              15.19 ms    6.90 GB/s
