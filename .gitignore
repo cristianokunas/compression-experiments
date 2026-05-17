@@ -23,4 +23,15 @@ Thumbs.db
 *~
 .vscode/
 .idea/
+
+# Daily benchmark output goes here -- regenerated on demand, never tracked.
 results/
+
+# Paper-frozen result snapshots ARE tracked (data backing published figures).
+# These re-include patterns put back anything under paper/**/results/.
+!paper/**/results/
+!paper/**/results/**
+
+# R session state -- never tracked.
+*.RData
+*.Rhistory

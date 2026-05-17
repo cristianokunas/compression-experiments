@@ -1,0 +1,14 @@
+\begin{table}[htbp]
+\centering
+\caption{Compression ratio by algorithm and dataset (4\,GB input). Ratios are GPU-independent.}
+\label{tab:compression_ratio}
+\begin{tabular}{lrrrr}
+\toprule
+Algorithm & TTI (seismic) & Binary & Random & Zeros \\
+\midrule
+LZ4 & 1.04 & 3.26 & 1.00 & 245 \\
+Snappy & 1.03 & 2.96 & 0.99 & 21.3 \\
+Cascaded & 1.03 & 3.04 & 1.00 & 92.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
