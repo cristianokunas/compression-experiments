@@ -1,0 +1,3 @@
+[info] shape product 104366080 B < file size 104857600 B; using first 104366080 B (491520 B trailing ignored)
+Files,Duplicate data,Size in MB,Pages,Avg page size in KB,Max page size in KB,Ucompressed size in bytes,Compressed size in bytes,Compression ratio,Compression throughput (uncompressed) in GB/s,Decompression throughput (uncompressed) in GB/s,Compression time (ms),Decompression time (ms),Transfer H2D (ms),Transfer D2H (ms),Total time (ms),Avg chunk time (ms),Comp throughput stddev (GB/s),Decomp throughput stddev (GB/s),Comp time stddev (ms),Decomp time stddev (ms)
+1,0,104.366080,1,104366.080000,104366.080000,104366080,79478796,1.31,15.97,16.86,6.534,6.191,9.560,0.000,16.094,6.534336,5239.0309,6466.5387,0.0199,0.0161
