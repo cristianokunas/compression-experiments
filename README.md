@@ -1,6 +1,6 @@
 # Compression Experiments
 
-Repositório de experimentação, benchmarking e análise de resultados para o [HIP Compression Toolkit](https://github.com/cristianokunas/hip-compression-toolkit).
+Repositório de experimentação, benchmarking e análise de resultados para o [HIP Compression Toolkit](https://github.com/cristianokunas/arcto).
 
 Este repositório é **separado da ferramenta** — contém toda a infraestrutura de execução, geração de dados, orquestração de benchmarks, visualização e análise.
 
@@ -56,7 +56,7 @@ singularity run --rocm \
   --bind /path/to/fletcher-io/original/run:/data/rsf:ro \
   --bind ./results:/data/results \
   --bind ./testdata:/data/testdata \
-  images/hipcomp_gfx1100.sif \
+  images/arcto_gfx1100.sif \
   -r /data/rsf \
   -d /data/testdata \
   -o /data/results \
@@ -78,9 +78,9 @@ python3 scripts/complete_viz_suite.py results/RX7900XT_latest
 
 | GPU | Arch | Imagem |
 |-----|------|--------|
-| RX 7900 XT | `gfx1100` | `hipcomp_gfx1100.sif` |
-| MI300X | `gfx942` | `hipcomp_gfx942.sif` |
-| MI210/250 | `gfx90a` | `hipcomp_gfx90a.sif` |
+| RX 7900 XT | `gfx1100` | `arcto_gfx1100.sif` |
+| MI300X | `gfx942` | `arcto_gfx942.sif` |
+| MI210/250 | `gfx90a` | `arcto_gfx90a.sif` |
 
 ## Dependências
 
@@ -95,7 +95,7 @@ Veja o [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md) para detalhes completos.
 O `.sif` é **self-contained** — o `defhip_benchmark.def` faz `git clone` e compila o toolkit automaticamente durante o build da imagem. Não é necessário ter o código-fonte do toolkit localmente para executar experimentos.
 
 ```
-[hip-compression-toolkit]        [compression-experiments]
+[arcto]        [compression-experiments]
       (API/Biblioteca)             (Experimentação)
            │                              │
      CMake build puro              singularity/def

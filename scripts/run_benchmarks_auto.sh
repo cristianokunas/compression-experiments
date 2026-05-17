@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Automated Benchmark Runner for hipCOMP compression algorithms
+# Automated Benchmark Runner for ARCTO compression algorithms
 # Runs LZ4, Snappy, and Cascaded benchmarks systematically
 #
 # Usage:
@@ -79,7 +79,7 @@ EXAMPLES:
     ./scripts/run_benchmarks_auto.sh -p "65536 1048576 16777216"
 
     # Inside Singularity container
-    singularity run --bind /data:/data hipcomp.sif -r /data/rsf -o /data/results
+    singularity run --bind /data:/data arcto.sif -r /data/rsf -o /data/results
 
 EOF
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Run hipCOMP benchmarks inside a Singularity container
+# Run ARCTO benchmarks inside a Singularity container
 #
 # Handles bind mounts, GPU access, and forwards options to run_benchmarks_auto.sh
 #
@@ -8,9 +8,9 @@
 #   ./scripts/run_singularity.sh <image.sif> <rsf_dir> [BENCHMARK_OPTIONS...]
 #
 # Examples:
-#   ./scripts/run_singularity.sh hipcomp_gfx942.sif /path/to/fletcher-io/original/run
-#   ./scripts/run_singularity.sh hipcomp_gfx942.sif /path/to/rsf -i 20 -p "65536 1048576"
-#   ./scripts/run_singularity.sh hipcomp_gfx942.sif /path/to/rsf --dry-run
+#   ./scripts/run_singularity.sh arcto_gfx942.sif /path/to/fletcher-io/original/run
+#   ./scripts/run_singularity.sh arcto_gfx942.sif /path/to/rsf -i 20 -p "65536 1048576"
+#   ./scripts/run_singularity.sh arcto_gfx942.sif /path/to/rsf --dry-run
 # =============================================================================
 
 set -e
@@ -39,7 +39,7 @@ fi
 # -------------------- Help --------------------
 show_help() {
     cat << 'EOF'
-Run hipCOMP benchmarks inside a Singularity container.
+Run ARCTO benchmarks inside a Singularity container.
 
 Usage: run_singularity.sh <image.sif> [rsf_dir] [BENCHMARK_OPTIONS...]
 
@@ -65,19 +65,19 @@ ENVIRONMENT VARIABLES:
 
 EXAMPLES:
     # With RSF — generates/updates TTI data and runs benchmarks
-    ./scripts/run_singularity.sh hipcomp_gfx942.sif /data/fletcher-io/original/run
+    ./scripts/run_singularity.sh arcto_gfx942.sif /data/fletcher-io/original/run
 
     # Without RSF — uses existing testdata/ (generates missing synthetic files only)
-    ./scripts/run_singularity.sh hipcomp_gfx942.sif
+    ./scripts/run_singularity.sh arcto_gfx942.sif
 
     # Multiple chunk sizes, 20 iterations (no RSF needed)
-    ./scripts/run_singularity.sh hipcomp_gfx942.sif -i 20 -p "65536 1048576 16777216"
+    ./scripts/run_singularity.sh arcto_gfx942.sif -i 20 -p "65536 1048576 16777216"
 
     # Custom results directory
-    RESULTS_DIR=/tmp/bench_results ./scripts/run_singularity.sh hipcomp_gfx942.sif /data/rsf
+    RESULTS_DIR=/tmp/bench_results ./scripts/run_singularity.sh arcto_gfx942.sif /data/rsf
 
     # Dry run to verify setup
-    ./scripts/run_singularity.sh hipcomp_gfx942.sif /data/rsf --dry-run
+    ./scripts/run_singularity.sh arcto_gfx942.sif /data/rsf --dry-run
 EOF
 }
 
@@ -152,7 +152,7 @@ fi
 # -------------------- Print Config --------------------
 echo ""
 echo -e "${BOLD}============================================${NC}"
-echo -e "${BOLD}  hipCOMP Singularity Benchmark Runner${NC}"
+echo -e "${BOLD}  ARCTO Singularity Benchmark Runner${NC}"
 echo -e "${BOLD}============================================${NC}"
 echo ""
 print_info "Image:     $SIF_IMAGE"

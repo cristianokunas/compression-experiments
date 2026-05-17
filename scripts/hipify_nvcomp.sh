@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 EXPE_DIR="$(dirname "$SCRIPT_DIR")"
 
 # --- Caminhos ------------------------------------------------
-NVCOMP_SRC="${NVCOMP_SRC:-/ssd/cakunas/devel/nvcomp/src}"
-TOOLKIT_SRC="${TOOLKIT_SRC:-/ssd/cakunas/hip-compression-toolkit/src}"
+NVCOMP_SRC="${NVCOMP_SRC:-/nvcomp/src}"
+TOOLKIT_SRC="${TOOLKIT_SRC:-/arcto/src}"
 
 HIPIFY_OUT="$EXPE_DIR/hipify-output/nvcomp-hipified/src"
 REPORT_DIR="$EXPE_DIR/hipify-output/reports"
@@ -23,7 +23,7 @@ fi
 
 if [ ! -d "$NVCOMP_SRC" ]; then
   echo "ERRO: nvcomp source não encontrado em $NVCOMP_SRC" >&2
-  echo "  Clone com: git clone --branch branch-2.2 https://github.com/NVIDIA/nvcomp.git /ssd/cakunas/devel/nvcomp" >&2
+  echo "  Clone com: git clone --branch branch-2.2 https://github.com/NVIDIA/nvcomp.git ~/nvcomp" >&2
   exit 1
 fi
 
@@ -37,11 +37,11 @@ declare -A FILE_MAP=(
   ["RunLengthEncodeGPU.cu"]="RunLengthEncodeGPU.hip"
   ["CudaUtils.cu"]="HipUtils.hip"
   ["Check.cpp"]="Check.cpp"
-  ["nvcomp_api.cpp"]="hipcomp_api.cpp"
+  ["nvcomp_api.cpp"]="arcto_api.cpp"
   ["TempSpaceBroker.cpp"]="TempSpaceBroker.cpp"
   ["LZ4Kernels.cuh"]="LZ4Kernels.hiph"
   ["CascadedKernels.cuh"]="CascadedKernels.hiph"
-  ["nvcomp_cub.cuh"]="hipcomp_hipcub.hiph"
+  ["nvcomp_cub.cuh"]="arcto_hipcub.hiph"
 )
 
 echo "=== Etapa 1: Convertendo nvcomp CUDA → HIP via hipify-perl ==="
@@ -73,12 +73,12 @@ cat > "$SUMMARY" << 'HEADER'
 # Comparação: hipify-perl vs Port Manual
 
 Comparação entre a conversão automática (hipify-perl) do nvcomp 2.2
-e o port manual no hip-compression-toolkit.
+e o port manual no arcto.
 
 ## Resumo por arquivo
 
-| Arquivo Original | hipify→nosso (diff lines) | hipify→AMD (diff lines) | Status |
-|---|---|---|---|
+| Arquivo Original | hipify→arcto (diff lines) | Status |
+|---|---|---|
 HEADER
 
 for cuda_file in "${!FILE_MAP[@]}"; do
@@ -97,14 +97,6 @@ for cuda_file in "${!FILE_MAP[@]}"; do
 
   our_diff=$(diff "$hipified" "$our_path" | grep -c '^[<>]' || true)
 
-  # AMD hipCOMP-core comparison (optional)
-  amd_path="/ssd/cakunas/devel/hipCOMP-core/src/$our_file"
-  if [ -f "$amd_path" ]; then
-    amd_diff=$(diff "$hipified" "$amd_path" | grep -c '^[<>]' || true)
-  else
-    amd_diff="N/A"
-  fi
-
   if [ "$our_diff" -eq 0 ]; then
     status="hipify perfeito"
   elif [ "$our_diff" -le 10 ]; then
@@ -113,7 +105,7 @@ for cuda_file in "${!FILE_MAP[@]}"; do
     status="manual"
   fi
 
-  echo "| $cuda_file | $our_diff | $amd_diff | $status |" >> "$SUMMARY"
+  echo "| $cuda_file | $our_diff | $status |" >> "$SUMMARY"
 
   # Gera diff detalhado por arquivo
   diff_file="$REPORT_DIR/diff_${cuda_file%.*}.txt"

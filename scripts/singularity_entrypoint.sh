@@ -1,21 +1,21 @@
 #!/bin/bash
 # =============================================================================
-# Singularity Entrypoint for hipCOMP Benchmark Automation
+# Singularity Entrypoint for ARCTO Benchmark Automation
 # 
 # This script is the default %runscript for the Singularity container.
 # It detects the GPU, prepares test data, and runs benchmarks automatically.
 #
 # Usage (from host — prefer run_singularity.sh wrapper):
-#   ./scripts/run_singularity.sh hipcomp.sif /path/to/rsf [OPTIONS]
+#   ./scripts/run_singularity.sh arcto.sif /path/to/rsf [OPTIONS]
 #
 # Or manually:
 #   singularity run --rocm \
 #     --bind /path/to/rsf/run:/data/rsf \
 #     --bind ./results:/data/results \
-#     hipcomp.sif -r /data/rsf -o /data/results [OPTIONS]
+#     arcto.sif -r /data/rsf -o /data/results [OPTIONS]
 #
 # Or exec directly:
-#   singularity exec --rocm hipcomp.sif \
+#   singularity exec --rocm arcto.sif \
 #     /opt/compression-experiments/scripts/run_benchmarks_auto.sh [OPTIONS]
 # =============================================================================
 
@@ -26,7 +26,7 @@ PROJECT_ROOT="${ARCTO_ROOT:-/opt/arcto}"
 SCRIPTS_ROOT="${ARCTO_SCRIPTS:-$SCRIPT_DIR}"
 
 echo "=============================================="
-echo "  hipCOMP Benchmark Container"
+echo "  ARCTO Benchmark Container"
 echo "=============================================="
 echo ""
 

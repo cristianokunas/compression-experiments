@@ -309,7 +309,7 @@ def convert_rsf_to_binary(rsf_header_file, output_file, validate=True, verbose=T
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Convert RSF format to raw binary for hipCOMP benchmarks',
+        description='Convert RSF format to raw binary for ARCTO benchmarks',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

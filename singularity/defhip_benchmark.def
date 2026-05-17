@@ -4,8 +4,10 @@ From: ubuntu:24.04
 %arguments
     # GPU architecture: gfx942 (MI300X), gfx90a (MI210), gfx906 (MI50), gfx1100 (RX 7900 XT)
     GPU_ARCH=gfx942
-    # Git branch to build from
-    BRANCH=devel
+    # Git branch to build from. feature/zfp-canonical carries the ZFP
+    # integration (canonical-wrap + GPU-native ZFP-Reversible3D); change to
+    # main / devel once that work lands there.
+    BRANCH=feature/zfp-canonical
 
 %post
     # Create standard bind mount points for host data
@@ -41,17 +43,22 @@ From: ubuntu:24.04
     export PATH=$ROCM_PATH/bin:$PATH
 
     # ====================================
-    # Clone and build hip-compression-toolkit
+    # Clone and build arcto
     # ====================================
     GPU_ARCH="{{ GPU_ARCH }}"
     BRANCH="{{ BRANCH }}"
 
     cd /opt
     git clone https://github.com/cristianokunas/compression-experiments.git
-    
-    rm -rf /opt/hip-compression-toolkit /opt/arcto
+
+    rm -rf /opt/arcto
+    # --recurse-submodules pulls third_party/zfp (the vendored canonical
+    # LLNL/zfp pinned at a known commit). Without it the ARCTO CMake
+    # aborts with "third_party/zfp is missing". --shallow-submodules keeps
+    # the image size down.
     git clone --branch "$BRANCH" --single-branch --depth 1 \
-        https://github.com/cristianokunas/hip-compression-toolkit.git arcto
+        --recurse-submodules --shallow-submodules \
+        https://github.com/cristianokunas/arcto.git arcto
     cd arcto
     mkdir -p build && cd build
 

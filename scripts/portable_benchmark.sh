@@ -1,5 +1,5 @@
 #!/bin/bash
-# Portable benchmark script for hipCOMP/nvCOMP comparison
+# Portable benchmark script for ARCTO/nvCOMP comparison
 # Works on both AMD (HIP) and NVIDIA (CUDA) GPUs
 #
 # Usage: ./scripts/portable_benchmark.sh [options]

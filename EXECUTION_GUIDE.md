@@ -8,15 +8,15 @@ Guia de como executar benchmarks de compressão (LZ4, Snappy, Cascaded) em GPUs 
 
 A separação é clara — **a ferramenta é apenas a biblioteca e seus benchmarks**, tudo o resto é infraestrutura de experimentação:
 
-### `hip-compression-toolkit/` — FERRAMENTA (API + Biblioteca)
+### `arcto/` — FERRAMENTA (API + Biblioteca)
 
 Projeto CMake puro. Nenhum script é necessário para build ou funcionamento.
 
 ```
-hip-compression-toolkit/
+arcto/
 ├── CMakeLists.txt              Build system (cmake + make é tudo que precisa)
-├── src/                        Código da biblioteca (libhipcomp.so)
-├── include/                    Headers públicos (hipcomp.h, hipcomp.hpp, hipcomp/)
+├── src/                        Código da biblioteca (libarcto.so)
+├── include/                    Headers públicos (arcto.h, arcto.hpp, arcto/)
 ├── benchmarks/                 Fontes dos benchmarks (compilam para executáveis)
 ├── tests/                      Testes unitários
 ├── cmake/                      Módulos CMake
@@ -26,20 +26,20 @@ hip-compression-toolkit/
 
 **Build direto (sem nenhum script):**
 ```bash
-cd hip-compression-toolkit
+cd arcto
 mkdir -p build && cd build
 cmake .. \
   -DCMAKE_PREFIX_PATH=/opt/rocm \
   -DCMAKE_HIP_ARCHITECTURES=gfx1100 \
   -DBUILD_BENCHMARKS=ON \
   -DBUILD_TESTS=ON \
-  -DCMAKE_INSTALL_PREFIX=/opt/hipcomp
+  -DCMAKE_INSTALL_PREFIX=/opt/arcto
 make -j$(nproc)
 make install
 ```
 
 **Produz:**
-- `lib/libhipcomp.so` — biblioteca compartilhada
+- `lib/libarcto.so` — biblioteca compartilhada
 - `bin/benchmark_lz4_chunked` — benchmark LZ4
 - `bin/benchmark_snappy_chunked` — benchmark Snappy
 - `bin/benchmark_cascaded_chunked` — benchmark Cascaded
@@ -99,7 +99,7 @@ O `def` fica no repo de **experimentos**. Ele clona e compila o toolkit automati
 cd hip-compression-experiments
 
 singularity build --fakeroot \
-  images/hipcomp_gfx1100.sif \
+  images/arcto_gfx1100.sif \
   singularity/defhip_benchmark.def
 # O def file usa GPU_ARCH=gfx1100 como argumento
 ```
@@ -107,7 +107,7 @@ singularity build --fakeroot \
 Ou usando o script wrapper:
 ```bash
 ./singularity/build_singularity.sh --arch gfx1100
-# Gera: images/hipcomp_gfx1100.sif (≈6 GB, self-contained)
+# Gera: images/arcto_gfx1100.sif (≈6 GB, self-contained)
 ```
 
 ### MI300X (gfx942)
@@ -135,10 +135,10 @@ cd hip-compression-experiments
 mkdir -p results testdata
 
 singularity run --rocm \
-  --bind /ssd/cakunas/fletcher-io/original/run:/data/rsf:ro \
+  --bind /path/to/fletcher-io/original/run:/data/rsf:ro \
   --bind ./results:/data/results \
   --bind ./testdata:/data/testdata \
-  images/hipcomp_gfx1100.sif \
+  images/arcto_gfx1100.sif \
   -r /data/rsf \
   -d /data/testdata \
   -o /data/results \
@@ -150,23 +150,23 @@ singularity run --rocm \
 
 Ou com o wrapper:
 ```bash
-./scripts/run_singularity.sh images/hipcomp_gfx1100.sif \
-  /ssd/cakunas/fletcher-io/original/run
+./scripts/run_singularity.sh images/arcto_gfx1100.sif \
+  /path/to/fletcher-io/original/run
 ```
 
 ### Com múltiplos chunk sizes (análise de throughput)
 
 ```bash
-./scripts/run_singularity.sh images/hipcomp_gfx1100.sif \
-  /ssd/cakunas/fletcher-io/original/run \
+./scripts/run_singularity.sh images/arcto_gfx1100.sif \
+  /path/to/fletcher-io/original/run \
   -i 20 -p "65536 1048576 16777216"
 ```
 
 ### Com mais iterações para maior precisão estatística
 
 ```bash
-./scripts/run_singularity.sh images/hipcomp_gfx1100.sif \
-  /ssd/cakunas/fletcher-io/original/run \
+./scripts/run_singularity.sh images/arcto_gfx1100.sif \
+  /path/to/fletcher-io/original/run \
   -i 50 -w 5
 ```
 
@@ -178,10 +178,10 @@ Ou com o wrapper:
 
 ```bash
 singularity run --rocm \
-  --bind /ssd/cakunas/fletcher-io/original/run:/data/rsf:ro \
+  --bind /path/to/fletcher-io/original/run:/data/rsf:ro \
   --bind ./results:/data/results \
   --bind ./testdata:/data/testdata \
-  images/hipcomp_gfx1100.sif \
+  images/arcto_gfx1100.sif \
   -r /data/rsf -d /data/testdata -o /data/results \
   -a "lz4" -i 10
 ```
@@ -190,10 +190,10 @@ singularity run --rocm \
 
 ```bash
 singularity run --rocm \
-  --bind /ssd/cakunas/fletcher-io/original/run:/data/rsf:ro \
+  --bind /path/to/fletcher-io/original/run:/data/rsf:ro \
   --bind ./results:/data/results \
   --bind ./testdata:/data/testdata \
-  images/hipcomp_gfx1100.sif \
+  images/arcto_gfx1100.sif \
   -r /data/rsf -d /data/testdata -o /data/results \
   -a "snappy" -i 10
 ```
@@ -203,8 +203,8 @@ singularity run --rocm \
 ## 4. Dry Run (validar setup sem executar)
 
 ```bash
-./scripts/run_singularity.sh images/hipcomp_gfx1100.sif \
-  /ssd/cakunas/fletcher-io/original/run --dry-run
+./scripts/run_singularity.sh images/arcto_gfx1100.sif \
+  /path/to/fletcher-io/original/run --dry-run
 ```
 
 ---
@@ -216,8 +216,8 @@ Para executar um benchmark individual sem o runner automático:
 ```bash
 singularity exec --rocm \
   --bind ./testdata:/data/testdata \
-  images/hipcomp_gfx1100.sif \
-  /opt/hipcomp/bin/benchmark_lz4_chunked \
+  images/arcto_gfx1100.sif \
+  /opt/arcto/bin/benchmark_lz4_chunked \
   -f /data/testdata/large_TTI_1024.bin -i 10 -p 65536
 ```
 
@@ -229,7 +229,7 @@ Se o ROCm estiver instalado localmente, compilar e executar direto:
 
 ```bash
 # 1. Buildar a ferramenta
-cd hip-compression-toolkit
+cd arcto
 mkdir -p build && cd build
 cmake .. -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_HIP_ARCHITECTURES=gfx1100 \
   -DBUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
@@ -237,12 +237,12 @@ make -j$(nproc)
 
 # 2. Gerar testdata (no repo de experimentos)
 cd ../../hip-compression-experiments
-./scripts/generate_testdata.sh /ssd/cakunas/fletcher-io/original/run
+./scripts/generate_testdata.sh /path/to/fletcher-io/original/run
 
 # 3. Executar benchmarks diretamente
-../hip-compression-toolkit/build/bin/benchmark_lz4_chunked -f testdata/large_TTI_1024.bin -i 10
-../hip-compression-toolkit/build/bin/benchmark_snappy_chunked -f testdata/large_TTI_1024.bin -i 10
-../hip-compression-toolkit/build/bin/benchmark_cascaded_chunked -f testdata/large_TTI_1024.bin -i 10
+../arcto/build/bin/benchmark_lz4_chunked -f testdata/large_TTI_1024.bin -i 10
+../arcto/build/bin/benchmark_snappy_chunked -f testdata/large_TTI_1024.bin -i 10
+../arcto/build/bin/benchmark_cascaded_chunked -f testdata/large_TTI_1024.bin -i 10
 ```
 
 ---
@@ -268,9 +268,9 @@ results/
 
 | Plataforma | Arch | Imagem SIF | Comando |
 |---|---|---|---|
-| RX 7900 XT | `gfx1100` | `hipcomp_gfx1100.sif` | `./scripts/run_singularity.sh images/hipcomp_gfx1100.sif <rsf_dir>` |
-| MI300X | `gfx942` | `hipcomp_gfx942.sif` | `./scripts/run_singularity.sh images/hipcomp_gfx942.sif <rsf_dir>` |
-| MI210/250 | `gfx90a` | `hipcomp_gfx90a.sif` | `./scripts/run_singularity.sh images/hipcomp_gfx90a.sif <rsf_dir>` |
+| RX 7900 XT | `gfx1100` | `arcto_gfx1100.sif` | `./scripts/run_singularity.sh images/arcto_gfx1100.sif <rsf_dir>` |
+| MI300X | `gfx942` | `arcto_gfx942.sif` | `./scripts/run_singularity.sh images/arcto_gfx942.sif <rsf_dir>` |
+| MI210/250 | `gfx90a` | `arcto_gfx90a.sif` | `./scripts/run_singularity.sh images/arcto_gfx90a.sif <rsf_dir>` |
 
 Todos os comandos são executados **de dentro do repo `hip-compression-experiments/`**.
 
@@ -290,6 +290,6 @@ Todos os comandos são executados **de dentro do repo `hip-compression-experimen
 ## TODO / Pendências
 
 - [ ] **Criar repo `hip-compression-experiments`**: Mover toda a infra de experimentação (scripts, singularity, results, testdata, visualização) para repositório separado.
-- [ ] **Limpar `hip-compression-toolkit/scripts/`**: Remover todos os scripts — a ferramenta é CMake puro. Nenhum script é referenciado pelo build system.
-- [ ] **Renomear referências "hipCOMP"**: O projeto evoluiu a partir da base nvCOMP/hipCOMP, mas atualmente é o **HIP Compression Toolkit**. Referências internas (variáveis `HIPCOMP_*`, prints, nomes de funções) devem ser atualizadas.
+- [ ] **Limpar `arcto/scripts/`**: Remover todos os scripts — a ferramenta é CMake puro. Nenhum script é referenciado pelo build system.
+- [ ] **Renomear referências "ARCTO"**: O projeto evoluiu a partir da base nvCOMP/ARCTO, mas atualmente é o **HIP Compression Toolkit**. Referências internas (variáveis `HIPCOMP_*`, prints, nomes de funções) devem ser atualizadas.
 - [ ] **Comparação hipify vs port manual**: Avaliar se um port automático via `hipify-perl`/`hipify-clang` dos fontes CUDA originais do nvCOMP produziria resultados equivalentes, documentando as correções manuais necessárias (wave size, shared memory, etc.) e diferenças de performance.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Compare benchmark results between AMD (hipCOMP) and NVIDIA (nvCOMP) platforms.
+Compare benchmark results between AMD (ARCTO) and NVIDIA (nvCOMP) platforms.
 
 Usage:
     python3 compare_platforms.py results/*.csv
@@ -83,7 +83,7 @@ def calculate_stats(entries):
 def print_comparison_table(grouped):
     """Print comparison table."""
     print("\n" + "=" * 100)
-    print("PLATFORM COMPARISON: hipCOMP (AMD) vs nvCOMP (NVIDIA)")
+    print("PLATFORM COMPARISON: ARCTO (AMD) vs nvCOMP (NVIDIA)")
     print("=" * 100)
     
     # Organize by algorithm

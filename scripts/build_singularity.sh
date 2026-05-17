@@ -10,6 +10,12 @@
 # =============================================================================
 
 set -e
+# pipefail so the exit status of a pipeline reflects the FIRST command that
+# failed, not just the last one. Without it, e.g.
+#   ./build_singularity.sh ... 2>&1 | tee build.log
+# silently reports tee's success (0) even when the singularity build under
+# the pipe failed.
+set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -39,7 +45,7 @@ CONTAINER_RUNTIME=$(detect_container_runtime)
 
 # -------------------- Defaults --------------------
 GPU_ARCH="gfx942"
-BRANCH="devel"
+BRANCH="feature/zfp-canonical"
 OUTPUT_NAME=""
 DEF_FILE="$PROJECT_ROOT/singularity/defhip_benchmark.def"
 FORCE=false
@@ -216,12 +222,20 @@ case "$BUILD_MODE" in
 esac
 
 # No need to change directory - the .def clones from GitHub directly
-print_info "Build command: ${BUILD_CMD[*]} ${FORCE:+--force} --build-arg GPU_ARCH=$GPU_ARCH --build-arg BRANCH=$BRANCH $OUTPUT_NAME $DEF_FILE"
+# Append --force only when explicitly requested. ${FORCE:+--force} expands
+# to "--force" for ANY non-empty FORCE value (including the literal string
+# "false"), which silently overwrote existing images.
+FORCE_FLAG=()
+if [ "$FORCE" = "true" ]; then
+    FORCE_FLAG+=(--force)
+fi
+
+print_info "Build command: ${BUILD_CMD[*]} ${FORCE_FLAG[*]} --build-arg GPU_ARCH=$GPU_ARCH --build-arg BRANCH=$BRANCH $OUTPUT_NAME $DEF_FILE"
 print_info "Starting build (this may take 20-40 minutes)..."
 echo ""
 
 "${BUILD_CMD[@]}" \
-    ${FORCE:+--force} \
+    "${FORCE_FLAG[@]}" \
     --build-arg "GPU_ARCH=$GPU_ARCH" \
     --build-arg "BRANCH=$BRANCH" \
     "$OUTPUT_NAME" \

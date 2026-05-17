@@ -1,8 +1,8 @@
-# Conversão de Dados RSF para Benchmarks hipCOMP
+# Conversão de Dados RSF para Benchmarks ARCTO
 
 ## Resumo da Solução
 
-Criei uma infraestrutura completa para converter dados RSF (Madagascar Seismic File Format) em binários puros para uso nos benchmarks do hipCOMP.
+Criei uma infraestrutura completa para converter dados RSF (Madagascar Seismic File Format) em binários puros para uso nos benchmarks do ARCTO.
 
 ## Arquivos Criados
 
@@ -141,7 +141,7 @@ Com base em dados sísmicos similares:
 
 ```bash
 # 1. Converter dados RSF
-cd /ssd/cakunas/hip-compression-toolkit
+cd /path/to/arcto
 ./scripts/prepare_rsf_testdata.sh
 
 # 2. Verificar arquivos gerados

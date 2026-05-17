@@ -51,10 +51,10 @@ fi
 # Default environment configurations - EDIT THESE for your setup
 declare -A ENV_CONFIGS
 ENV_CONFIGS=(
-    ["MI300X"]="gfx942|user@pcad.inf.ufrgs.br|/home/user/hipcomp|/home/user/fletcher-io/original/run|PCAD UFRGS"
-    ["MI210"]="gfx90a|user@grid5000-mi210.example|/home/user/hipcomp|/home/user/fletcher-io/original/run|Grid5000"
-    ["MI50"]="gfx906|user@grid5000-mi50.example|/home/user/hipcomp|/home/user/fletcher-io/original/run|Grid5000"
-    ["RX7900XT"]="gfx1100|user@grid5000-rx7900.example|/home/user/hipcomp|/home/user/fletcher-io/original/run|Grid5000"
+    ["MI300X"]="gfx942|user@pcad.inf.ufrgs.br|/home/user/arcto|/home/user/fletcher-io/original/run|PCAD UFRGS"
+    ["MI210"]="gfx90a|user@grid5000-mi210.example|/home/user/arcto|/home/user/fletcher-io/original/run|Grid5000"
+    ["MI50"]="gfx906|user@grid5000-mi50.example|/home/user/arcto|/home/user/fletcher-io/original/run|Grid5000"
+    ["RX7900XT"]="gfx1100|user@grid5000-rx7900.example|/home/user/arcto|/home/user/fletcher-io/original/run|Grid5000"
 )
 
 # Override with config file if present
@@ -93,13 +93,13 @@ CONFIGURATION:
     # environments.conf
     MI300X_ARCH=gfx942
     MI300X_HOST=user@pcad.inf.ufrgs.br
-    MI300X_WORKDIR=/home/user/hipcomp
+    MI300X_WORKDIR=/home/user/arcto
     MI300X_RSF=/home/user/fletcher-io/original/run
     MI300X_NOTES="PCAD UFRGS"
     
     MI210_ARCH=gfx90a
     MI210_HOST=user@grid5000-node
-    MI210_WORKDIR=/home/user/hipcomp
+    MI210_WORKDIR=/home/user/arcto
     MI210_RSF=/data/fletcher-io/original/run
     MI210_NOTES="Grid5000 Lyon"
     
@@ -139,7 +139,7 @@ load_config() {
             local notes_var="${env_name}_NOTES"
             
             if [ -n "${!arch_var}" ] && [ -n "${!host_var}" ]; then
-                ENV_CONFIGS[$env_name]="${!arch_var}|${!host_var}|${!workdir_var:-/tmp/hipcomp}|${!rsf_var:-}|${!notes_var:-}"
+                ENV_CONFIGS[$env_name]="${!arch_var}|${!host_var}|${!workdir_var:-/tmp/arcto}|${!rsf_var:-}|${!notes_var:-}"
             fi
         done
     fi
@@ -207,7 +207,7 @@ cmd_build() {
     
     for env_name in $(get_target_envs); do
         local arch=$(get_env_field "$env_name" 1)
-        local sif_file="$build_dir/hipcomp_${env_name}_${arch}.sif"
+        local sif_file="$build_dir/arcto_${env_name}_${arch}.sif"
         
         if [ -f "$sif_file" ]; then
             print_warn "$sif_file already exists, skipping (delete to rebuild)"
@@ -239,7 +239,7 @@ cmd_deploy() {
         local arch=$(get_env_field "$env_name" 1)
         local host=$(get_env_field "$env_name" 2)
         local workdir=$(get_env_field "$env_name" 3)
-        local sif_file="$build_dir/hipcomp_${env_name}_${arch}.sif"
+        local sif_file="$build_dir/arcto_${env_name}_${arch}.sif"
         
         print_step "Deploying to $env_name ($host)..."
         
@@ -276,7 +276,7 @@ cmd_run() {
         local workdir=$(get_env_field "$env_name" 3)
         local rsf_dir=$(get_env_field "$env_name" 4)
         [ -n "$CUSTOM_RSF" ] && rsf_dir="$CUSTOM_RSF"
-        local sif_name="hipcomp_${env_name}_${arch}.sif"
+        local sif_name="arcto_${env_name}_${arch}.sif"
         
         print_step "Running on $env_name ($host)..."
         
@@ -437,7 +437,7 @@ cmd_config() {
         print_warn "No config file found. Creating template..."
         cat > "$CONFIG_FILE" << 'CONF'
 # =============================================================================
-# hipCOMP Benchmark Environment Configuration
+# ARCTO Benchmark Environment Configuration
 # =============================================================================
 # Edit the SSH hosts and paths for each GPU environment.
 # The deploy_benchmarks.sh script uses these to automate benchmarks.
@@ -445,28 +445,28 @@ cmd_config() {
 # --- MI300X (gfx942) ---
 MI300X_ARCH=gfx942
 MI300X_HOST=user@pcad.inf.ufrgs.br
-MI300X_WORKDIR=/home/user/hipcomp
+MI300X_WORKDIR=/home/user/arcto
 MI300X_RSF=/home/user/fletcher-io/original/run
 MI300X_NOTES="PCAD UFRGS"
 
 # --- MI210 (gfx90a) ---
 MI210_ARCH=gfx90a
 MI210_HOST=user@grid5000-mi210-node
-MI210_WORKDIR=/home/user/hipcomp
+MI210_WORKDIR=/home/user/arcto
 MI210_RSF=/home/user/fletcher-io/original/run
 MI210_NOTES="Grid5000"
 
 # --- MI50 (gfx906) ---
 MI50_ARCH=gfx906
 MI50_HOST=user@grid5000-mi50-node
-MI50_WORKDIR=/home/user/hipcomp
+MI50_WORKDIR=/home/user/arcto
 MI50_RSF=/home/user/fletcher-io/original/run
 MI50_NOTES="Grid5000"
 
 # --- RX 7900 XT (gfx1100) ---
 RX7900XT_ARCH=gfx1100
 RX7900XT_HOST=user@grid5000-rx7900-node
-RX7900XT_WORKDIR=/home/user/hipcomp
+RX7900XT_WORKDIR=/home/user/arcto
 RX7900XT_RSF=/home/user/fletcher-io/original/run
 RX7900XT_NOTES="Grid5000"
 CONF

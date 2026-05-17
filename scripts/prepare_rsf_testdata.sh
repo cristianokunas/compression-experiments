@@ -1,5 +1,5 @@
 #!/bin/bash
-# Prepare RSF test data for hipCOMP benchmarks
+# Prepare RSF test data for ARCTO benchmarks
 # Converts RSF format (header + binary) to simple binary files
 
 set -e
@@ -30,7 +30,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DEFAULT_RSF_BASE="${PROJECT_ROOT}/../fletcher-io/original/run"
 OUTPUT_DIR="${1:-${PROJECT_ROOT}/testdata}"
 
-print_info "=== RSF to Binary Converter for hipCOMP Benchmarks ==="
+print_info "=== RSF to Binary Converter for ARCTO Benchmarks ==="
 echo ""
 
 # Check if Python script exists
@@ -224,7 +224,7 @@ if [ -d "$OUTPUT_DIR" ] && [ "$(ls -A $OUTPUT_DIR 2>/dev/null)" ]; then
     
     # Create recommendations file
     cat > "${OUTPUT_DIR}/RSF_README.txt" << 'EOF'
-# RSF Test Data for hipCOMP Benchmarks
+# RSF Test Data for ARCTO Benchmarks
 
 ## Files Generated
 

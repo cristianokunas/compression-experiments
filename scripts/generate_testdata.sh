@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Generate test data for hipCOMP compression benchmarks
+# Generate test data for ARCTO compression benchmarks
 #
 # Creates synthetic data (zeros, random, binary) and extracts TTI simulation
 # data from RSF files. All files follow naming convention:
@@ -47,7 +47,7 @@ GENERATE_XLARGE=true
 # -------------------- Help --------------------
 show_help() {
     cat << 'EOF'
-Generate test data for hipCOMP compression benchmarks.
+Generate test data for ARCTO compression benchmarks.
 
 Usage: generate_testdata.sh [OPTIONS]
 
@@ -219,7 +219,7 @@ generate_tti() {
 # MAIN
 # =====================================================================
 echo ""
-print_info "=== hipCOMP Test Data Generator ==="
+print_info "=== ARCTO Test Data Generator ==="
 print_info "Output: $OUTPUT_DIR"
 print_info "Sizes:  ${SIZE_ORDER[*]}"
 if [ -n "$RSF_DIR" ]; then
