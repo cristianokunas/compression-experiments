@@ -1,0 +1,5 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"void arcto::lowlevel::lz4CompressBatchKernel<unsigned char>(unsigned char const* const*, unsigned long const*, unsigned char* const*, unsigned long*, unsigned short*, unsigned int, unsigned long)",7,148857206,21265315.142857,92.36,21170669,21356483,66805.446930
+"arcto::lowlevel::lz4DecompressBatchKernel(unsigned char const* const*, unsigned long const*, unsigned long const*, unsigned long, unsigned char* const*, unsigned long*, arctoStatus_t*, bool)",7,10275600,1467942.857143,6.38,1451139,1482531,13285.553149
+"void thrust::THRUST_200700_400000_NS::hip_rocprim::__parallel_for::kernel<256u, thrust::THRUST_200700_400000_NS::hip_rocprim::__uninitialized_fill::functor<thrust::THRUST_200700_400000_NS::device_ptr<unsigned char>, unsigned char>, unsigned long, 1u>(thrust::THRUST_200700_400000_NS::hip_rocprim::__uninitialized_fill::functor<thrust::THRUST_200700_400000_NS::device_ptr<unsigned char>, unsigned char>, unsigned long, unsigned long)",9,1811189,201243.222222,1.12,200210,202254,675.518834
+"__amd_rocclr_copyBuffer",50,230241,4604.820000,0.1429,2325,10343,1608.028476
