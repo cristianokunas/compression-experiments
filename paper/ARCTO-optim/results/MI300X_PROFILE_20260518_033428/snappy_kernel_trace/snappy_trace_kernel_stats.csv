@@ -1,0 +1,5 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"arcto::snap_kernel(void const* const*, unsigned long const*, void* const*, unsigned long const*, arcto::gpu_snappy_status_s*, unsigned long*)",7,12265803,1752257.571429,66.48,1736141,1784008,19117.898367
+"arcto::unsnap_kernel(void const* const*, unsigned long const*, void* const*, unsigned long const*, arctoStatus_t*, unsigned long*)",7,3967987,566855.285714,21.51,564015,570349,2378.244150
+"void thrust::THRUST_200700_400000_NS::hip_rocprim::__parallel_for::kernel<256u, thrust::THRUST_200700_400000_NS::hip_rocprim::__uninitialized_fill::functor<thrust::THRUST_200700_400000_NS::device_ptr<unsigned char>, unsigned char>, unsigned long, 1u>(thrust::THRUST_200700_400000_NS::hip_rocprim::__uninitialized_fill::functor<thrust::THRUST_200700_400000_NS::device_ptr<unsigned char>, unsigned char>, unsigned long, unsigned long)",9,2036331,226259.000000,11.04,199965,233680,14469.791818
+"__amd_rocclr_copyBuffer",50,179276,3585.520000,0.9717,2245,6294,1048.774469
