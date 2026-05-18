@@ -41,6 +41,7 @@ RSF_DIR=""           # Optional: RSF source directory for auto-generation
 RSF_START_FRACTION=0.5  # Extract from middle of simulation
 SKIP_TESTDATA_GEN=false
 DRY_RUN=false
+PINNED_INPUT=false       # -P/--pinned-input: passes -P true to each benchmark (HIP path only)
 
 # -------------------- Help --------------------
 show_help() {
@@ -63,6 +64,10 @@ OPTIONS:
     -s, --start-fraction F   RSF extraction start fraction (default: 0.5 = middle)
     --skip-testdata          Skip test data generation even if RSF dir is set
     --dry-run                Show what would be executed without running
+    -P, --pinned-input       Pass -P true to each benchmark: coalesce input chunks
+                             into a pinned host buffer + one bulk H2D (HIP only).
+                             Tags EnvLabel with _PINNED so baseline and pinned
+                             rows in the same CSV are distinguishable.
     -h, --help               Show this help
 
 EXAMPLES:
@@ -77,6 +82,10 @@ EXAMPLES:
 
     # Multiple chunk sizes for throughput analysis
     ./scripts/run_benchmarks_auto.sh -p "65536 1048576 16777216"
+
+    # Paper2 baseline + optimized sweep on the same GPU (two CSVs side-by-side)
+    ./scripts/run_benchmarks_auto.sh -o results/baseline
+    ./scripts/run_benchmarks_auto.sh -o results/pinned -P --skip-testdata
 
     # Inside Singularity container
     singularity run --bind /data:/data arcto.sif -r /data/rsf -o /data/results
@@ -98,6 +107,7 @@ while [[ $# -gt 0 ]]; do
         -s|--start-fraction) RSF_START_FRACTION="$2"; shift 2 ;;
         --skip-testdata)    SKIP_TESTDATA_GEN=true; shift ;;
         --dry-run)          DRY_RUN=true; shift ;;
+        -P|--pinned-input)  PINNED_INPUT=true; shift ;;
         -h|--help)          show_help; exit 0 ;;
         *)                  print_error "Unknown option: $1"; show_help; exit 1 ;;
     esac
@@ -139,6 +149,20 @@ get_env_label() {
     esac
 }
 ENV_LABEL=$(get_env_label "$GPU_ARCH")
+# Annotate the EnvLabel so baseline and pinned runs from the same GPU are
+# distinguishable when their CSVs are concatenated for paper figures.
+if [ "$PINNED_INPUT" = "true" ]; then
+    ENV_LABEL="${ENV_LABEL}_PINNED"
+fi
+
+# Build extra args appended to every benchmark invocation. Only HIP-side
+# benchmarks understand -P; on NVIDIA builds this would be ignored at
+# parse time (the runner just won't get a chance to call them because
+# PINNED_INPUT defaults to false).
+BENCH_EXTRA_ARGS=""
+if [ "$PINNED_INPUT" = "true" ]; then
+    BENCH_EXTRA_ARGS="-P true"
+fi
 
 # -------------------- Find Benchmark Executables --------------------
 find_benchmarks() {
@@ -258,6 +282,7 @@ print_info "Warmup:      $WARMUP"
 print_info "Chunk sizes: $CHUNK_SIZES"
 print_info "Test data:   $TESTDATA_DIR"
 print_info "Results:     $EXPERIMENT_DIR"
+print_info "Pinned input: $PINNED_INPUT$( [ "$PINNED_INPUT" = "true" ] && echo " (passing -P true to each benchmark)" )"
 echo ""
 
 # -------------------- Collect Test Files --------------------
@@ -307,17 +332,17 @@ for algo in $ALGORITHMS; do
             print_step "[$current_test/$TOTAL_TESTS] ${algo^^} | $testfile_name (${testfile_mb} MB) | chunk=$chunk_label"
             
             if [ "$DRY_RUN" = "true" ]; then
-                echo "  [DRY-RUN] $exe -f $testfile -i $ITERATIONS -w $WARMUP -g $GPU_DEVICE -p $chunk_size -c true -t false"
+                echo "  [DRY-RUN] $exe -f $testfile -i $ITERATIONS -w $WARMUP -g $GPU_DEVICE -p $chunk_size -c true -t false $BENCH_EXTRA_ARGS"
                 echo "$algo,$testfile_name,$testfile_size,$testfile_mb,$chunk_size,DRY,DRY,DRY,DRY,DRY,$PLATFORM,$GPU_NAME,$GPU_ARCH,$ENV_LABEL,$ITERATIONS,$WARMUP,$TIMESTAMP" >> "$RESULTS_CSV"
                 continue
             fi
-            
+
             # Run benchmark
             temp_output=$(mktemp)
             temp_log="$EXPERIMENT_DIR/${algo}_${testfile_name}_chunk${chunk_size}.log"
-            
+
             if timeout 600 $exe -f "$testfile" -i $ITERATIONS -w $WARMUP \
-                    -g $GPU_DEVICE -p $chunk_size -c true -t false \
+                    -g $GPU_DEVICE -p $chunk_size -c true -t false $BENCH_EXTRA_ARGS \
                     > "$temp_output" 2>&1; then
                 
                 # Parse CSV output
