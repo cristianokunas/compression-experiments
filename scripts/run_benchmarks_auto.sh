@@ -286,7 +286,10 @@ print_info "Pinned input: $PINNED_INPUT$( [ "$PINNED_INPUT" = "true" ] && echo "
 echo ""
 
 # -------------------- Collect Test Files --------------------
-mapfile -t TEST_FILES < <(find "$TESTDATA_DIR" -name "*.bin" -type f | sort)
+# -L follows symlinks so that callers can curate a subset of testdata via
+# `ln -s` into a working directory without copying. Without it, find -type f
+# matches only regular files and silently produces an empty TEST_FILES.
+mapfile -t TEST_FILES < <(find -L "$TESTDATA_DIR" -name "*.bin" -type f | sort)
 NUM_FILES=${#TEST_FILES[@]}
 
 if [ $NUM_FILES -eq 0 ]; then
