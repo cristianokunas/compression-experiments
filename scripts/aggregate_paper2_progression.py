@@ -69,15 +69,27 @@ mi300x_pinned_8k = (
 
 
 # -- RX7900XT data sources ----------------------------------------------------
-# All from the same lunaris chunk sweep (single SIF + single build).
-# Per-algo optimal chunk: LZ4=16K, Snappy=32K, Cascaded=64K (default).
+# Now uses RX7900XT_PAPER2_FULL_20260518_011428 which has the full 3-algo
+# x 16-dataset matrix per stage (previous RX7900XT_CHUNK_SWEEP_*/ was
+# TTI-only).
+#
+# Per-algo optimal chunk on gfx1100 wave32: LZ4=16K, Snappy=32K, Cascaded=64K.
+# All three optim sweeps ran all algos x all datasets (the shell -a quoting
+# didn't restrict in practice -- harmless extra data), so we filter to the
+# expected algo per source for the chunk_optim stage.
 
-rx_baseline_64k = RESULTS / "RX7900XT_CHUNK_SWEEP_20260517_235720" / "baseline_chunk65536" / "results.csv"
-rx_pinned_64k   = RESULTS / "RX7900XT_CHUNK_SWEEP_20260517_235720" / "pinned_chunk65536" / "results.csv"
+_RX_BASE = RESULTS / "RX7900XT_PAPER2_FULL_20260518_011428"
+rx_baseline_64k = _RX_BASE / "baseline" / "RX7900XT_20260518_011429" / "results.csv"
+rx_pinned_64k   = _RX_BASE / "pinned_64K" / "RX7900XT_PINNED_20260518_012021" / "results.csv"
+# chunk_optim per-algo: the pinned_16K_lz4 / pinned_32K_snappy subdirs of
+# _RX_BASE ran with the WRONG chunk size (shell quoting ate the -p flag).
+# RX7900XT_PAPER2_CHUNKOPTIM_REDO_* re-runs them with explicit args -- 16K
+# for LZ4, 32K for Snappy. Cascaded optimum is 64K so it reuses the pinned_64K dir.
+_RX_REDO = RESULTS / "RX7900XT_PAPER2_CHUNKOPTIM_REDO_20260518_015527"
 rx_pinned_per_algo = {
-    "lz4":      RESULTS / "RX7900XT_CHUNK_SWEEP_20260517_235720" / "pinned_chunk16384" / "results.csv",
-    "snappy":   RESULTS / "RX7900XT_CHUNK_SWEEP_20260517_235720" / "pinned_chunk32768" / "results.csv",
-    "cascaded": RESULTS / "RX7900XT_CHUNK_SWEEP_20260517_235720" / "pinned_chunk65536" / "results.csv",
+    "lz4":      _RX_REDO / "pinned_16K_lz4" / "RX7900XT_PINNED_20260518_015527" / "results.csv",
+    "snappy":   _RX_REDO / "pinned_32K_snappy" / "RX7900XT_PINNED_20260518_020016" / "results.csv",
+    "cascaded": _RX_BASE / "pinned_64K" / "RX7900XT_PINNED_20260518_012021" / "results.csv",
 }
 
 
@@ -126,12 +138,9 @@ def gather_gpu(gpu, baseline_csv, pinned_csv, optim_per_algo, tti_only=False):
 
 
 rows = []
-# MI300X: full matrix (3 algos x 16 datasets x 3 stages = 144 rows)
+# Both GPUs get the full matrix now: 3 algos x 16 datasets x 3 stages = 144 rows each, 288 total.
 rows += gather_gpu("MI300X",   mi300x_baseline,   mi300x_pinned_64k, mi300x_pinned_8k)
-# RX 7900 XT: TTI-only (lunaris sweep covered only TTI for the cross-GPU
-# anchor). 3 algos x 2 datasets x 3 stages = 18 rows.
-rows += gather_gpu("RX7900XT", rx_baseline_64k,   rx_pinned_64k,     rx_pinned_per_algo,
-                   tti_only=True)
+rows += gather_gpu("RX7900XT", rx_baseline_64k,   rx_pinned_64k,     rx_pinned_per_algo)
 
 # -- Write CSV ----------------------------------------------------------------
 fields = ["GPU", "Algo", "TestFile", "Stage", "ChunkSize", "CompGBs",
