@@ -166,12 +166,16 @@ fi
 
 # -------------------- Find Benchmark Executables --------------------
 find_benchmarks() {
+    # ARCTO_BUILD env var is searched FIRST so user-supplied builds win over
+    # any binaries baked into a container image. Without this, an outdated
+    # /opt/arcto inside an old SIF can silently shadow a freshly built local
+    # tree and cause every benchmark to fail on flags it does not understand.
     local search_dirs=(
+        "${ARCTO_BUILD:-/nonexistent}/bin"
+        "${ARCTO_BUILD:-/nonexistent}/benchmarks"
         "/opt/arcto/bin"
         "/opt/arcto/build/bin"
         "/opt/arcto/build/benchmarks"
-        "${ARCTO_BUILD:-/nonexistent}/bin"
-        "${ARCTO_BUILD:-/nonexistent}/benchmarks"
         "$PROJECT_ROOT/build/bin"
         "$PROJECT_ROOT/build/benchmarks"
         "$PROJECT_ROOT/build_latest/bin"
