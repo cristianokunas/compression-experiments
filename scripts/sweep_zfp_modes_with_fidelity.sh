@@ -57,8 +57,10 @@ run_one() {
     echo "  [FAIL] $mode $param $fname"; return
   fi
   IFS=',' read -ra f <<< "$last"
+  # Shape contains commas; rewrite with 'x' so it doesn't break the CSV.
+  local shape_safe=$(echo "$shape" | tr ',' 'x')
   # Build the CSV row from standard fields (8=ratio, 9=comp, 10=decomp, 11=comp_ms, 12=decomp_ms, 13=h2d, 15=total, 21=max_abs, 22=rmse, 23=psnr, 24=max_rel, 25=amp_range)
-  echo "zfp,$mode,$param,$fname,$fsize,$fmb,$shape,${f[8]},${f[9]},${f[10]},${f[11]},${f[12]},${f[13]},${f[15]},${f[21]},${f[22]},${f[23]},${f[24]},${f[25]},$NODE,RX7900XT,gfx1100,RX7900XT_ZFP_FIDELITY,$iters,$warmup,$TS" >> "$CSV"
+  echo "zfp,$mode,$param,$fname,$fsize,$fmb,$shape_safe,${f[8]},${f[9]},${f[10]},${f[11]},${f[12]},${f[13]},${f[15]},${f[21]},${f[22]},${f[23]},${f[24]},${f[25]},$NODE,RX7900XT,gfx1100,RX7900XT_ZFP_FIDELITY,$iters,$warmup,$TS" >> "$CSV"
   printf "  %-18s %-6s %-22s ratio=%-6s comp=%-7s decomp=%-7s max_abs=%-10s PSNR=%s\n" \
     "$mode" "$param" "$fname" "${f[8]}" "${f[9]}" "${f[10]}" "${f[21]}" "${f[23]}"
 }
