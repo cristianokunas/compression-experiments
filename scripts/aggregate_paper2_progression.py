@@ -61,8 +61,10 @@ mi300x_pinned_64k = (
     "pinned" / "MI300X_PINNED_20260518_030652" / "results.csv"
 )
 mi300x_pinned_8k = (
-    RESULTS / "MI300X_CHUNK_SWEEP_SMALL_20260518_043136" /
-    "pinned_chunk8192" / "MI300X_PINNED_20260518_043229" / "results.csv"
+    # Full 16-dataset sweep at 8K pinned -- the "final state" on MI300X.
+    # Supersedes the earlier TTI-only chunk_sweep_small for matrix purposes.
+    RESULTS / "MI300X_PAPER2_FULL_OPTIM_20260518_052839" /
+    "MI300X_PINNED_20260518_052841" / "results.csv"
 )
 
 
@@ -81,9 +83,11 @@ rx_pinned_per_algo = {
 
 # -- Build progression rows ---------------------------------------------------
 
-def gather_gpu(gpu, baseline_csv, pinned_csv, optim_per_algo):
+def gather_gpu(gpu, baseline_csv, pinned_csv, optim_per_algo, tti_only=False):
     """
     optim_per_algo can be a single Path (same for all algos) or a dict {algo: Path}.
+    If tti_only=True, restrict to *_TTI_*.bin files (used when one of the
+    underlying snapshots only covered TTI -- the lunaris sweep).
     """
     base_rows = {(r["algo"], r["file"]): r for r in read_csv(baseline_csv)}
     pinn_rows = {(r["algo"], r["file"]): r for r in read_csv(pinned_csv)}
@@ -99,10 +103,7 @@ def gather_gpu(gpu, baseline_csv, pinned_csv, optim_per_algo):
     out = []
     for key, base in sorted(base_rows.items()):
         algo, fname = key
-        # Filter to TTI files only (we have both medium+large there; the full
-        # MI300X sweep has 16 files, but for cross-GPU comparison only TTI
-        # exists on the lunaris side)
-        if "TTI" not in fname:
+        if tti_only and "TTI" not in fname:
             continue
         base_total = base["total"]
         for stage_name, src in [
@@ -125,12 +126,12 @@ def gather_gpu(gpu, baseline_csv, pinned_csv, optim_per_algo):
 
 
 rows = []
+# MI300X: full matrix (3 algos x 16 datasets x 3 stages = 144 rows)
 rows += gather_gpu("MI300X",   mi300x_baseline,   mi300x_pinned_64k, mi300x_pinned_8k)
-rows += gather_gpu("RX7900XT", rx_baseline_64k,   rx_pinned_64k,     rx_pinned_per_algo)
-
-# Restrict MI300X to TTI medium + large for direct cross-GPU comparison
-# (lunaris sweep is TTI-only)
-rows = [r for r in rows if r["TestFile"] in ("medium_TTI_100.bin", "large_TTI_1024.bin")]
+# RX 7900 XT: TTI-only (lunaris sweep covered only TTI for the cross-GPU
+# anchor). 3 algos x 2 datasets x 3 stages = 18 rows.
+rows += gather_gpu("RX7900XT", rx_baseline_64k,   rx_pinned_64k,     rx_pinned_per_algo,
+                   tti_only=True)
 
 # -- Write CSV ----------------------------------------------------------------
 fields = ["GPU", "Algo", "TestFile", "Stage", "ChunkSize", "CompGBs",
