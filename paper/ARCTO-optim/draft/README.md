@@ -36,7 +36,13 @@ VRAM viability matrix (see Table II in section 2.4):
 | MI50 (32 GB) | y     | y      | y    | y    | ~    | --    |
 | MI210 (64 GB)| y     | y      | y    | y    | y    | ~     |
 | MI300X (192) | y     | y      | y    | y    | y    | y     |
-| RX 7900 (20) | y     | y      | y    | y    | ~    | --    |
+| RX 7900 (20) | y     | y      | y    | y    | --   | --    |
+
+Note: RX 7900 XT 8 GB tested empirically and fails with
+`hipErrorOutOfMemory`: peak device allocation = 2x input
+(input buffer + worst-case compress output buffer held
+simultaneously during the kernel) plus per-chunk scratch
+> 16 GB at 8 GB input, exceeds the 20 GB VRAM ceiling.
 
 ## Source data on disk
 

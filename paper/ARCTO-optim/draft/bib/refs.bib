@@ -1,0 +1,278 @@
+% --- ZFP e compressao float -------------------------------
+
+@article{lindstrom2014zfp,
+  author  = {Lindstrom, Peter},
+  title   = {Fixed-Rate Compressed Floating-Point Arrays},
+  journal = {IEEE Transactions on Visualization and Computer Graphics},
+  volume  = {20},
+  number  = {12},
+  pages   = {2674--2683},
+  year    = {2014},
+  doi     = {10.1109/TVCG.2014.2346458}
+}
+
+% O paper que justifica acuracia fixa para wavefields sismicos
+@article{lindstrom2016f3dt,
+  author  = {Lindstrom, Peter and Chen, Po and Lee, En-Jui},
+  title   = {Reducing Disk Storage of Full-{3D} Seismic Waveform
+             Tomography ({F3DT}) Through Lossy Online Compression},
+  journal = {Computers \& Geosciences},
+  volume  = {93},
+  pages   = {45--54},
+  year    = {2016},
+  doi     = {10.1016/j.cageo.2016.04.009}
+}
+
+% --- Compressores e bibliotecas GPU --------------------------
+
+@misc{nvcomp,
+  author = {{NVIDIA}},
+  title  = {{nvCOMP}: {GPU} Compression and Decompression Library},
+  howpublished = {\url{https://developer.nvidia.com/nvcomp}},
+  note   = {Accessed 2026},
+  year   = {2024}
+}
+
+@misc{lz4,
+  author = {Collet, Yann},
+  title  = {{LZ4}: Extremely Fast Compression},
+  howpublished = {\url{https://lz4.github.io/lz4/}},
+  note   = {Accessed 2026}
+}
+
+% Falcon: compressao lossless adaptativa de float em GPU (2025)
+@misc{li2025highthroughputgpuframeworkadaptive,
+  title  = {A High-Throughput {GPU} Framework for Adaptive Lossless
+            Compression of Floating-Point Data},
+  author = {Li, Zheng and Wang, Weiyan and Li, Ruiyuan and Chen, Chao
+            and Long, Xianlei and Zheng, Linjiang and Xu, Quanqing
+            and Yang, Chuanhui},
+  year   = {2025},
+  eprint = {2511.04140},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.DB},
+  url    = {https://arxiv.org/abs/2511.04140}
+}
+
+% CODAG: caracterizacao e otimizacao de decompressao em GPU
+@article{park2023codag,
+  title   = {{CODAG}: Characterizing and Optimizing Decompression
+             Algorithms for {GPUs}},
+  author  = {Park, Jeongmin and Qureshi, Zaid and Mailthody, Vikram and
+             Gacek, Andrew and Shao, Shunfan and AlMasri, Mohammad and
+             Gelado, Isaac and Xiong, Jinjun and Newburn, Chris and
+             Chung, I-hsin and others},
+  journal = {arXiv preprint arXiv:2307.03760},
+  year    = {2023}
+}
+
+% ndzip-gpu: compressao lossless de float cientifico em GPU
+@inproceedings{knorr2021ndzip,
+  author    = {Knorr, Fabian and Thoman, Peter and Fahringer, Thomas},
+  title     = {ndzip-gpu: Efficient Lossless Compression of Scientific
+               Floating-Point Data on {GPUs}},
+  booktitle = {Proceedings of the International Conference for High
+               Performance Computing, Networking, Storage and Analysis
+               (SC)},
+  year      = {2021},
+  publisher = {ACM}
+}
+
+% MPC: compressao massivamente paralela de dado cientifico
+@inproceedings{yang2015mpc,
+  author    = {Yang, Annie and Mukka, Hari and Hesaaraki, Farbod and
+               Burtscher, Martin},
+  title     = {{MPC}: A Massively Parallel Compression Algorithm for
+               Scientific Data},
+  booktitle = {IEEE International Conference on Cluster Computing
+               (CLUSTER)},
+  pages     = {381--389},
+  year      = {2015}
+}
+
+% API de compressao end-to-end multi-GPU (Celerity) -- 2026
+@article{mitterrutzner2026api,
+  author  = {Mitterrutzner, Gabriel and Thoman, Peter and
+             Gschwandtner, Philipp},
+  title   = {A High-Level {API} for End-to-End Data Compression in
+             Multi-{GPU} Cluster Applications},
+  journal = {International Journal of Parallel Programming},
+  volume  = {54},
+  number  = {3},
+  year    = {2026},
+  doi     = {10.1007/s10766-026-00818-6}
+}
+
+% --- Compressao para sismica / RTM / wavefield ---------------
+
+% Compressao lossy/lossless de wavefield para RTM (SBAC-PAD 2023)
+@inproceedings{barbosa2023rtm,
+  author    = {Barbosa, Carlos H. S. and Coutinho, Alvaro L. G. A.},
+  title     = {Reverse Time Migration with Lossy and Lossless Wavefield
+               Compression},
+  booktitle = {IEEE International Symposium on Computer Architecture and
+               High Performance Computing (SBAC-PAD)},
+  pages     = {192--201},
+  year      = {2023},
+  doi       = {10.1109/SBAC-PAD59825.2023.00028}
+}
+
+% Compressao paralela para migracao de dados (IPDPS 2002)
+@inproceedings{lee2002migration,
+  author    = {Lee, Jonghyun and Winslett, Marianne and Ma, Xiaosong
+               and Yu, Shengke},
+  title     = {Enhancing Data Migration Performance via Parallel Data
+               Compression},
+  booktitle = {Proceedings of the 16th International Parallel and
+               Distributed Processing Symposium (IPDPS)},
+  year      = {2002},
+  doi       = {10.1109/IPDPS.2002.1015528}
+}
+
+% Compressor lossy error-bounded resiliente para transferencia (SC 2021)
+@inproceedings{li2021resilient,
+  author    = {Li, Sihuan and Di, Sheng and Zhao, Kai and Liang, Xin
+               and Chen, Zizhong and Cappello, Franck},
+  title     = {Resilient Error-Bounded Lossy Compressor for Data
+               Transfer},
+  booktitle = {Proceedings of the International Conference for High
+               Performance Computing, Networking, Storage and Analysis
+               (SC)},
+  pages     = {1--14},
+  year      = {2021}
+}
+
+% I/O acelerado por compressao via escalonamento in situ (EuroSys 2024)
+@inproceedings{jin2024concealing,
+  author    = {Jin, Sian and Di, Sheng and Vivien, Fr{\'e}d{\'e}ric and
+               Wang, Daoce and Robert, Yves and Tao, Dingwen and
+               Cappello, Franck},
+  title     = {Concealing Compression-Accelerated {I/O} for {HPC}
+               Applications Through In Situ Task Scheduling},
+  booktitle = {Proceedings of the Nineteenth European Conference on
+               Computer Systems (EuroSys)},
+  pages     = {981--998},
+  year      = {2024}
+}
+
+% lsCOMP: compressao eficiente de dado de light source (SC 2025)
+@inproceedings{huang2025lscomp,
+  author    = {Huang, Yafan and Di, Sheng and Underwood, Robert and
+               Myint, Peco and Chu, Miaoqi and Li, Guanpeng and
+               Schwarz, Nicholas and Cappello, Franck},
+  title     = {{lsCOMP}: Efficient Light Source Compression},
+  booktitle = {Proceedings of the International Conference for High
+               Performance Computing, Networking, Storage and Analysis
+               (SC)},
+  pages     = {2006--2023},
+  year      = {2025}
+}
+
+% --- RTM, Fletcher, simulacao sismica ------------------------
+
+@article{fletcher2009tti,
+  author  = {Fletcher, Robin P. and Du, Xiang and Fowler, Paul J.},
+  title   = {Reverse Time Migration in Tilted Transversely Isotropic
+             ({TTI}) Media},
+  journal = {Geophysics},
+  volume  = {74},
+  number  = {6},
+  pages   = {WCA179--WCA187},
+  year    = {2009},
+  doi     = {10.1190/1.3269902}
+}
+
+@inproceedings{boito2017seismic,
+  author    = {Boito, Francieli Z. and Bez, Jean Luca and Dupros,
+               Fabrice and Dantas, M{\'a}rio A. R. and Navaux,
+               Philippe O. A. and Aochi, Hideo},
+  title     = {High Performance {I/O} for Seismic Wave Propagation
+               Simulations},
+  booktitle = {Euromicro International Conference on Parallel,
+               Distributed and Network-Based Processing (PDP)},
+  pages     = {31--38},
+  year      = {2017}
+}
+
+@inproceedings{alonazi2019tbrtm,
+  author    = {Al{O}nazi, Amani and Ltaief, Hatem and Keyes, David
+               and Said, Issam and Thibault, Samuel},
+  title     = {Asynchronous Task-Based Execution of the Reverse Time
+               Migration for the Oil and Gas Industry},
+  booktitle = {IEEE International Conference on Cluster Computing
+               (CLUSTER)},
+  pages     = {1--11},
+  year      = {2019}
+}
+
+% --- Trabalhos proprios do autor -----------------------------
+% NOTA double-blind: citar em terceira pessoa. As publicadas (CARLA 2024,
+% SSCAD 2025) podem ser citadas normalmente em terceira pessoa; o ICCSA
+% 2026 esta em fase de publicacao, entrada sem DOI.
+
+@inproceedings{kunas2024carla,
+  author    = {K{\"u}nas, Cristiano A. and Freytag, Gabriel and
+               Navaux, Philippe O. A.},
+  title     = {Enhancing Reverse Time Migration Simulations in {HPC}
+               Systems Through {I/O} and Computation Overlapping},
+  booktitle = {Latin American High Performance Computing Conference
+               (CARLA)},
+  year      = {2024}
+}
+
+@inproceedings{kunas2025compressao,
+  author    = {K{\"u}nas, Cristiano A. and Freytag, Gabriel and
+               Ara{\'u}jo, Thiago and Machado, Rodrigo and Morales,
+               Bruno and Sardinha, Alexandre and Navaux, Philippe O. A.},
+  title     = {Compress{\~a}o de Dados para Redu{\c{c}}{\~a}o de {E/S}
+               em Simula{\c{c}}{\~o}es S{\'\i}smicas de Alto
+               Desempenho},
+  booktitle = {Simp{\'o}sio em Sistemas Computacionais de Alto
+               Desempenho (SSCAD)},
+  pages     = {326--337},
+  year      = {2025},
+  organization = {SBC}
+}
+
+% ICCSA 2026 -- em fase de publicacao, sem DOI ainda.
+% [CHECK] completar paginas/editora quando publicado; titulo a confirmar.
+% NOTE for the SBAC-PAD double-blind submission, USE @anon_iccsa2026
+% below for in-text citations of this work (the author entry is kept
+% here for the post-review camera-ready).
+@inproceedings{kunas2026iccsa,
+  author    = {K{\"u}nas, Cristiano A. and Freytag, Gabriel and 
+              Bez, Jean L. and Araújo, T. and Navaux, Philippe O. A.},
+  title     = {Characterizing Lossless GPU Data Compression Across {AMD} {CDNA} and {RDNA} Architectures},
+  booktitle = {International Conference on Computational Science and
+               Its Applications (ICCSA)},
+  year      = {2026},
+  note      = {To appear}
+}
+
+% Anonymized variant of the ICCSA 2026 work, to be used in the
+% for-review double-blind submission. The actual venue / authorship
+% will be restored in the camera-ready (swap the cite key back to
+% kunas2026iccsa once the review process is complete).
+@misc{anon_iccsa2026,
+  author = {{Anonymous}},
+  title  = {Characterizing Lossless GPU Data Compression Across {AMD} {CDNA} and {RDNA} Architectures},
+  note   = {Citation anonymized for double-blind review;
+            this is a recent work approved and in a publish process.},
+  year   = {2026}
+}
+
+% --- Programacao GPU AMD -------------------------------------
+
+@misc{rocm,
+  author = {{AMD}},
+  title  = {{ROCm} Documentation: {HIP} Programming Guide},
+  howpublished = {\url{https://rocm.docs.amd.com}},
+  note   = {Accessed 2026}
+}
+
+@misc{top500nov2025,
+  author = {{TOP500}},
+  title  = {{TOP500} List, November 2025},
+  howpublished = {\url{https://top500.org/lists/top500/2025/11/}},
+  note   = {Accessed 2026}
+}

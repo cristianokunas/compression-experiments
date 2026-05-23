@@ -75,9 +75,8 @@ Section~\ref{sec:optim-adaptive-tiled}.
 \subsection{The Tooling Gap on AMD}
 \label{sec:bg-gap}
 
-The AMD software ecosystem centers on
-ROCm~\cite{rocm}, an open-source platform that includes the HIP
-programming model. HIP source code is near-syntactically identical
+The AMD software ecosystem centers on ROCm~\cite{rocm}, an
+open-source platform that includes the HIP programming model. HIP source code is near-syntactically identical
 to CUDA and can be retargeted to NVIDIA via a thin translation
 header. However, while HIP simplifies porting CUDA code,
 achieving optimal performance on AMD hardware often requires
@@ -85,9 +84,9 @@ architecture-specific optimizations that go beyond simple API
 translation.
 
 The compression-tool asymmetry between the two ecosystems is
-documented in our prior characterization work
-\cite{kunas2026iccsa}: while NVIDIA has \nvcomp{} as a
-production-ready library, the only AMD-side counterpart is
+documented in a recent characterization study on AMD GPU
+architectures~\cite{anon_iccsa2026}: while NVIDIA has \nvcomp{}
+as a production-ready library, the only AMD-side counterpart is
 \hipcomp{}, a community-driven port started in 2022 that covers
 only LZ4 and Snappy, applies direct source translation, and is
 not maintained as a stable API. Scientists working on
@@ -111,20 +110,21 @@ H2D, compress kernel, decompress kernel) via host-side
 \texttt{--report\_phases} flag.
 
 \paragraph{Hardware platforms}
-The MI50, MI210, and MI300X experiments use the Grid'5000
-testbed~\cite{grid5000} at the Luxembourg site (vianden cluster),
-which provides exclusive access to single-tenant compute nodes.
-The RX~7900~XT experiments run on the PCAD\footnote{
-\url{https://pcad.inf.ufrgs.br/}} laboratory at UFRGS on a
-Threadripper PRO 5965WX host with 256~GB DDR4 and PCIe~Gen4 x16
-host interconnect. Both platforms run the same container image,
-differing only in the architecture-specific build target.
+The MI50, MI210, and MI300X experiments use a publicly accessible
+HPC testbed at the Luxembourg site (vianden cluster), which
+provides exclusive access to single-tenant compute nodes. The
+RX~7900~XT experiments run on a workstation-class host at a host
+institution research laboratory with a Threadripper PRO 5965WX
+processor, 256~GB DDR4, and PCIe~Gen4 x16 host interconnect. Both
+platforms run the same container image, differing only in the
+architecture-specific build target.
 
 \paragraph{Workloads}
 The reference workload is the TTI (Tilted Transversely Isotropic)
 seismic wavefield produced by the Fletcher forward-modelling
-benchmark~\cite{fletcher2009tti}, the same workload used in our
-ICCSA characterization~\cite{kunas2026iccsa}. The dataset is
+benchmark~\cite{fletcher2009tti}, the same workload used in the
+prior cross-AMD characterization on which this paper
+builds~\cite{anon_iccsa2026}. The dataset is
 extracted from the middle of a $448^3$ grid simulation with 201
 timesteps (to avoid the near-zero values dominant in
 initialization timesteps that would inflate compression ratios)
@@ -140,7 +140,12 @@ the (GPU, size) combinations evaluated.
 \centering
 \caption{(GPU, size) combinations evaluated in this paper.
 \checkmark{} = evaluated; ${\sim}$ = tight (input + output + scratch
-near VRAM ceiling, evaluated with caution); --- = exceeds VRAM.}
+near VRAM ceiling, evaluated with caution); --- = exceeds VRAM.
+The benchmark allocates a peak of approximately $2 \times$ the input
+size on the device (input buffer plus worst-case compressed-output
+buffer, both held simultaneously during the compress kernel), so
+the maximum input size that fits on a part of VRAM capacity $V$ is
+about $V/2$.}
 \label{tab:viability}
 \footnotesize
 \begin{tabular}{l c c c c c c}
@@ -150,10 +155,19 @@ near VRAM ceiling, evaluated with caution); --- = exceeds VRAM.}
 MI50       (32 GB) & \checkmark & \checkmark & \checkmark & \checkmark & ${\sim}$ & --- \\
 MI210      (64 GB) & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ${\sim}$ \\
 MI300X     (192 GB)& \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
-RX 7900 XT (20 GB) & \checkmark & \checkmark & \checkmark & \checkmark & ${\sim}$ & --- \\
+RX 7900 XT (20 GB) & \checkmark & \checkmark & \checkmark & \checkmark & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+The RX~7900~XT was empirically confirmed to fail at 8~GB with
+\texttt{hipErrorOutOfMemory}: the peak simultaneous device
+allocation (input buffer at 8~GB plus the worst-case compressed
+output buffer at $\approx 8.5$~GB plus the per-chunk scratch)
+exceeds the 20~GB VRAM ceiling. The same physical constraint
+applies to MI50 at 16~GB. The cross-architecture coverage of the
+evaluation is therefore: small inputs validated on all four parts;
+large inputs validated on the parts whose VRAM accommodates them.
 
 \paragraph{Metrics and protocol}
 Each (algorithm, size, mode) configuration runs in a separate
