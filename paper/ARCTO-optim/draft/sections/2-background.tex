@@ -1,0 +1,168 @@
+\section{Background and Experimental Setup}
+\label{sec:background}
+
+\subsection{AMD GPU Architectures}
+\label{sec:bg-amd}
+
+AMD has established two distinct GPU architectures targeting
+different markets. The Compute DNA (CDNA) line is purpose-built for
+data-center HPC, emphasizing high computational throughput and
+high-bandwidth memory; the evolution from CDNA (MI50, MI100)
+through CDNA~2 (MI210, MI250X) to CDNA~3 (MI300X) brought
+substantial improvements in compute density and HBM bandwidth, with
+the current flagship MI300X providing 304 compute units, 192~GB of
+HBM3, and over 5~TB/s of memory bandwidth. The Radeon DNA (RDNA)
+line targets gaming and consumer applications but is also relevant
+for cost-sensitive HPC deployments and for development workflows;
+RDNA~3 (RX~7900~XT) is the reference part here. Table~\ref{tab:gpus}
+summarizes the four AMD GPUs evaluated in this paper.
+
+\begin{table}[t]
+\centering
+\caption{AMD GPU architectures evaluated in this paper.}
+\label{tab:gpus}
+\footnotesize
+\begin{tabular}{lllrrr}
+\toprule
+\textbf{GPU} & \textbf{Arch.} & \textbf{ISA} & \textbf{CUs} & \textbf{Memory} & \textbf{BW (GB/s)} \\
+\midrule
+MI50       & GCN    & gfx906  &  60 & 32 GB HBM2  & 1{,}024 \\
+MI210      & CDNA~2 & gfx90a  & 104 & 64 GB HBM2e & 1{,}638 \\
+MI300X     & CDNA~3 & gfx942  & 304 & 192 GB HBM3 & 5{,}300 \\
+RX 7900 XT & RDNA~3 & gfx1100 &  84 & 20 GB GDDR6 &   800  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The four reference parts span an order of magnitude in compute unit
+count and memory bandwidth, and three distinct architectural
+families. They share the SIMT execution model but differ on the
+specific axes that compression kernels exercise the most: wavefront
+size (CDNA fixed at 64 threads; RDNA configurable wave32 or wave64),
+on-package cache capacity (4~MB on MI50 to 256~MB Infinity Cache on
+MI300X), and host interconnect (PCIe Gen3 to Gen5 across the
+lineup). These differences propagate directly into the
+optimization choices presented in Sections~\ref{sec:optim-chunk-size}
+and~\ref{sec:optim-adaptive-tiled}.
+
+\subsection{Batched Chunked Compression on GPUs}
+\label{sec:bg-batched}
+
+The dominant GPU compression model, introduced by \nvcomp{} and
+inherited by \arcto, is \emph{batched chunked} processing. The
+input buffer is partitioned into fixed-size chunks (typically
+64~KB) and the chunks are processed independently in parallel,
+with one or more waves per chunk according to the algorithm's
+internal structure. LZ4 uses a single wave per chunk with a
+private hash table for match finding; Snappy uses two
+cooperating waves; Cascaded applies a multi-stage pipeline
+(delta plus run-length plus bit-packing) with 128 threads per
+4~KB partition. The chunk size is the central parameter exposed
+to the caller and is the primary lever for occupancy tuning.
+
+At the API boundary, the caller hands the library a vector of
+chunk pointers and an output device buffer. Two transfer
+patterns are common: \emph{scattered pageable}, where each chunk
+is staged from a separate pageable host allocation via its own
+\texttt{hipMemcpyAsync}, and \emph{coalesced pinned}, where the
+chunks are first packed into a single pinned host buffer and the
+entire batch is uploaded in one bulk \texttt{hipMemcpyAsync}. The
+pinned variant achieves PCIe peak bandwidth on the bulk copy but
+pays a non-trivial allocation cost up front. The trade-off
+between these two patterns is the subject of
+Section~\ref{sec:optim-adaptive-tiled}.
+
+\subsection{The Tooling Gap on AMD}
+\label{sec:bg-gap}
+
+The AMD software ecosystem centers on
+ROCm~\cite{rocm}, an open-source platform that includes the HIP
+programming model. HIP source code is near-syntactically identical
+to CUDA and can be retargeted to NVIDIA via a thin translation
+header. However, while HIP simplifies porting CUDA code,
+achieving optimal performance on AMD hardware often requires
+architecture-specific optimizations that go beyond simple API
+translation.
+
+The compression-tool asymmetry between the two ecosystems is
+documented in our prior characterization work
+\cite{kunas2026iccsa}: while NVIDIA has \nvcomp{} as a
+production-ready library, the only AMD-side counterpart is
+\hipcomp{}, a community-driven port started in 2022 that covers
+only LZ4 and Snappy, applies direct source translation, and is
+not maintained as a stable API. Scientists working on
+AMD-equipped systems including El Capitan, Frontier, and others
+cannot directly benefit from the mature CUDA compression
+ecosystem and must either port code themselves, use suboptimal
+tools, or forgo GPU-accelerated compression entirely. This
+situation motivates the present work.
+
+\subsection{Experimental Setup}
+\label{sec:bg-setup}
+
+All measurements in this paper use the same Singularity container
+(\texttt{arcto\_gfx<arch>.sif}) built per AMD architecture from a
+common Ubuntu~22.04 + ROCm~7.0.1 base. \arcto{} is built from
+commit \texttt{f8b1c5f} of the \texttt{feature/scaling-instrumentation}
+branch. The benchmark binaries time each phase of the
+host-to-device path (allocation, pageable-to-pinned memcpy, bulk
+H2D, compress kernel, decompress kernel) via host-side
+\texttt{std::chrono} and GPU-side \texttt{hipEvent}, exposed by a
+\texttt{--report\_phases} flag.
+
+\paragraph{Hardware platforms}
+The MI50, MI210, and MI300X experiments use the Grid'5000
+testbed~\cite{grid5000} at the Luxembourg site (vianden cluster),
+which provides exclusive access to single-tenant compute nodes.
+The RX~7900~XT experiments run on the PCAD\footnote{
+\url{https://pcad.inf.ufrgs.br/}} laboratory at UFRGS on a
+Threadripper PRO 5965WX host with 256~GB DDR4 and PCIe~Gen4 x16
+host interconnect. Both platforms run the same container image,
+differing only in the architecture-specific build target.
+
+\paragraph{Workloads}
+The reference workload is the TTI (Tilted Transversely Isotropic)
+seismic wavefield produced by the Fletcher forward-modelling
+benchmark~\cite{fletcher2009tti}, the same workload used in our
+ICCSA characterization~\cite{kunas2026iccsa}. The dataset is
+extracted from the middle of a $448^3$ grid simulation with 201
+timesteps (to avoid the near-zero values dominant in
+initialization timesteps that would inflate compression ratios)
+and truncated to six canonical sizes covering the scaling range
+of interest: \textbf{10~MB, 100~MB, 1~GB, 4~GB, 8~GB, 16~GB}. Not
+every (GPU, size) combination is viable: the smaller-VRAM parts
+cannot accommodate the largest inputs because the device input
+plus output buffers and the compression scratch space together
+exceed the on-package memory. Table~\ref{tab:viability} reports
+the (GPU, size) combinations evaluated.
+
+\begin{table}[t]
+\centering
+\caption{(GPU, size) combinations evaluated in this paper.
+\checkmark{} = evaluated; ${\sim}$ = tight (input + output + scratch
+near VRAM ceiling, evaluated with caution); --- = exceeds VRAM.}
+\label{tab:viability}
+\footnotesize
+\begin{tabular}{l c c c c c c}
+\toprule
+\textbf{GPU} & \textbf{10 MB} & \textbf{100 MB} & \textbf{1 GB} & \textbf{4 GB} & \textbf{8 GB} & \textbf{16 GB} \\
+\midrule
+MI50       (32 GB) & \checkmark & \checkmark & \checkmark & \checkmark & ${\sim}$ & --- \\
+MI210      (64 GB) & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ${\sim}$ \\
+MI300X     (192 GB)& \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+RX 7900 XT (20 GB) & \checkmark & \checkmark & \checkmark & \checkmark & ${\sim}$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Metrics and protocol}
+Each (algorithm, size, mode) configuration runs in a separate
+process invocation with 1 warmup iteration and 3--5 timed
+iterations. The benchmark reports per-phase times in milliseconds
+(allocation, pageable-to-pinned memcpy, bulk H2D, kernel),
+end-to-end time as the sum of phases, and compression ratio.
+Cross-mode comparisons use end-to-end speedup of the proposed mode
+over the scattered-pageable baseline. The full schema is
+documented in the benchmark CSV header and reproduced in the
+public repository\footnote{
+\TODO{public repo URL}}.

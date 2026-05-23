@@ -1,0 +1,64 @@
+% ARCTO: A Profile-Driven Compression Library for AMD GPUs
+% Target venue: SBAC-PAD 2026
+% Working draft.
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Useful macros
+\newcommand{\arcto}{\textsc{ARCTO}}
+\newcommand{\nvcomp}{\textsc{nvCOMP}}
+\newcommand{\hipcomp}{\textsc{hipCOMP}}
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+\title{ARCTO: A Profile-Driven Compression Library\\
+       for AMD GPUs}
+
+\author{
+  \IEEEauthorblockN{Cristiano A. K\"unas, \TODO{co-authors}}\\
+  \IEEEauthorblockA{
+    Universidade Federal do Rio Grande do Sul (UFRGS), PCAD Lab\\
+    Porto Alegre, Brazil\\
+    \texttt{cakunas@inf.ufrgs.br}
+  }
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\TODO{Abstract: write last. ~200 words. Key claims:
+(1) AMD has no production-grade GPU compression library;
+(2) hipify port from nvCOMP gives functional baseline but is far from
+optimal; (3) ARCTO closes this gap with two profile-driven
+optimizations -- wave-saturation chunk-size formula
+(kernel-side, up to 2.87x kernel speedup on MI300X) and adaptive
+tiled aggregation (transfer-side, up to 2.26x end-to-end speedup on
+MI300X for 16 GB workloads, vs single-shot pinned which is shown to
+be negative in honest accounting). The methodology generalizes to
+RDNA and CDNA across four generations, and is validated on the TTI
+seismic workload that motivates the work.}
+\end{abstract}
+
+\input{sections/1-introduction}
+\input{sections/2-background}
+% \input{sections/3-arcto-library}
+% \input{sections/4-optim-chunk-size}
+% \input{sections/5-optim-adaptive-tiled}
+% \input{sections/6-evaluation}
+% \input{sections/7-related-work}
+% \input{sections/8-conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{bib/refs}
+
+\end{document}
