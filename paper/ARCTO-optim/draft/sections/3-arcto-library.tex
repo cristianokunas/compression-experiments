@@ -1,0 +1,213 @@
+\section{The ARCTO Library}
+\label{sec:arcto-library}
+
+\arcto{} is a GPU compression library for AMD GPUs designed to play
+the role that \nvcomp{}~\cite{nvcomp} plays on the NVIDIA side: a
+stable, batched, multi-algorithm public C API that scientific
+applications can link against in production. The design choices are
+made explicit in this section so that the two optimization
+contributions presented later (Sections~\ref{sec:optim-chunk-size}
+and~\ref{sec:optim-adaptive-tiled}) sit on a defensible infrastructure.
+
+\subsection{Design constraints}
+\label{sec:arcto-constraints}
+
+Three constraints shape every \arcto{} decision. First, \emph{the
+contribution sits in the optimization layer, not in the algorithmic
+cores.} The four compression kernels are inherited from established
+references (LZ4, Snappy, and Cascaded from the \nvcomp{}~2.2
+codebase; ZFP from its canonical upstream) and treated as fixed black
+boxes from \arcto{}'s point of view. This separation reserves the
+engineering effort and the experimental contribution of the present
+work for the profile-driven layer that surrounds the kernels,
+presented in Sections~\ref{sec:optim-chunk-size}
+and~\ref{sec:optim-adaptive-tiled}, on top of cores whose correctness
+has already been validated by years of CUDA-side production use.
+Second, \emph{binary
+compatibility and language reach matter}: production scientific
+codes routinely link from Fortran and C call sites, and the
+target application of the present study, the Fletcher seismic
+forward-modelling pipeline~\cite{fletcher2009tti}, is no exception.
+Third, \emph{portability across the AMD lineup is mandatory but
+must not preclude per-architecture tuning}: the same source tree has
+to compile and run on GCN, CDNA~$\{$1,2,3$\}$ and RDNA~3 with
+architecture-aware constants, not with runtime arch dispatch that
+adds branches inside hot kernels.
+
+\subsection{Porting approach}
+\label{sec:arcto-porting}
+
+\arcto{} bootstraps from the open-source nvCOMP~2.2
+codebase~\cite{nvcomp}, which provides a batched compression API
+that processes multiple independent data chunks in parallel, a
+design well-suited to GPU architectures. The codebase contains
+well-structured, GPU-optimized implementations of the three target
+byte-level algorithms (LZ4, Snappy, Cascaded), and its batched API
+model maps directly to the HIP programming model. The porting
+methodology follows the standard CUDA-to-HIP translation workflow
+documented in the HIP programming guide~\cite{rocm} and proceeds in
+three phases.
+
+\emph{API translation.} \arcto{} uses AMD's
+\texttt{hipify-perl} tool~\cite{rocm} to perform the initial
+mechanical translation of the CUDA source code to HIP. The tool
+handles approximately 90\,\% of the API surface automatically; the
+remaining manual modifications involve replacing CUB device
+primitives with hipCUB equivalents, adapting warp-level
+intrinsics, and resolving header conflicts between CUDA and HIP
+include paths. This phase preserves the algorithmic core unchanged
+and produces a binary-compatible port that the second and third
+phases then make work in the AMD environment.
+
+\emph{Build system adaptation.} The CMake build is restructured to
+detect the HIP compiler (\texttt{hipcc}) and to target specific GPU
+architectures via their GFX identifiers
+(\texttt{gfx906} for MI50, \texttt{gfx90a} for MI210, \texttt{gfx942}
+for MI300X, and \texttt{gfx1100} for RX~7900~XT). A build-time
+option controls whether the library compiles with 32-thread or
+64-thread wavefront assumptions, so that the same source tree
+serves the CDNA family (fixed wave64) and RDNA~3 (configurable
+wave32 or wave64) without runtime dispatch. The per-architecture
+binaries are produced as separate shared libraries and shipped in
+distinct Singularity images, one per \texttt{gfx<arch>}, so that the
+exact target ISA is fixed at container-build time.
+
+\emph{Correctness validation.} The port is validated through a
+round-trip check that requires
+\texttt{decompress(compress(data))} to be bit-exact equal to the
+input across all chunk sizes, data types, and algorithms. This is
+the standard correctness test for lossless compression
+implementations and ensures that no data corruption is introduced
+during the porting process.
+
+\subsection{Algorithm portfolio}
+\label{sec:arcto-portfolio}
+
+\arcto{} ships four compression algorithms organized along two
+orthogonal axes: input domain (byte-level versus floating-point) and
+reconstruction fidelity (lossless versus lossy). The byte-level
+lossless tier comprises LZ4, Snappy, and Cascaded, all three
+inherited from the \nvcomp{} codebase and hipified through the
+process of Section~\ref{sec:arcto-porting}. The three algorithms
+cover complementary operating points within the byte-level family:
+LZ4 and Snappy prioritize raw throughput with dictionary-style match
+finding, while Cascaded layers run-length, delta and bit-packing
+stages for inputs whose entropy is concentrated in slow trends rather
+than in repeated matches. This tier is the direct hipified equivalent
+of the corresponding \nvcomp{} batched offering and exposes the same
+scalar-byte input contract.
+
+The floating-point tier is covered by ZFP, integrated into \arcto{}
+through a different path than the byte-level codecs. Rather than
+hipifying the \texttt{zfp} reference implementation,
+\arcto{} carries it as a git submodule so that the algorithm core
+remains untouched and trackable to its upstream maintainer; only the
+AMD back-end glue and a new GPU-native lossless module are written
+within \arcto{}, which ensures that any future change in the upstream
+ZFP release is a submodule update rather than a divergent fork.
+
+ZFP is exposed through the four operating modes of its canonical
+implementation~\cite{lindstrom2014zfp}, which differ in what they
+guarantee about the reconstruction. The \emph{fixed-accuracy} mode
+bounds the absolute reconstruction error of every output value by a
+user-specified tolerance $\tau$; the \emph{fixed-rate} mode allocates
+a fixed bit budget per value and therefore yields a deterministic
+output size and a deterministic compression ratio; the
+\emph{fixed-precision} mode preserves a user-specified number of
+bit planes of the transform and trades them against the tail bits.
+The \emph{reversible} mode is the lossless counterpart of the three
+lossy modes and is exposed by the API for workflows that mandate
+bit-exact reconstruction; it is not exercised in the measurement
+campaign of Section~\ref{sec:evaluation}, where the three lossy modes
+carry the ZFP story.
+
+The lossy modes are a deliberate offering rather than a fallback. For
+seismic forward modelling and the reverse-time-migration workflow it
+feeds, bounded-error reconstruction of the wavefield does not
+propagate visibly into the migrated image at the tolerances that yield
+the largest storage savings, a property established by Lindstrom,
+Chen and Lee on full-3D waveform tomography
+data~\cite{lindstrom2016f3dt}. Fixed-accuracy is the right operating
+point when the error budget is the constraint; fixed-rate is the
+right operating point when the storage budget is the constraint;
+fixed-precision is reported alongside as a third operating point that
+gives explicit control over how many bit planes of the transform are
+retained.
+
+The two optimizations of Sections~\ref{sec:optim-chunk-size}
+and~\ref{sec:optim-adaptive-tiled} are layered on top of the chunked
+batched template that LZ4, Snappy, and Cascaded share, and the
+evaluation of Section~\ref{sec:evaluation} reports their effect on
+that family. ZFP follows a different execution model: its
+block-floating-point transform operates on whole-field three-dimensional
+input rather than on the per-chunk windows that the byte-level codecs
+consume, so it is benchmarked through a dedicated single-call entry
+point and reported on its own axes. The three lossy ZFP modes are
+reported on a throughput-versus-quality plane, since their value
+proposition combines compression ratio and bounded reconstruction
+error rather than throughput alone.
+
+\subsection{Public API and integration model}
+\label{sec:arcto-api}
+
+\arcto{} exposes a stable C API that mirrors the nvCOMP batched
+signature. The two design points behind the C-not-C++ decision are
+ABI stability across compiler versions, which a public C surface
+guarantees and a templated C++ interface does not, and direct
+linkability from Fortran call sites in production scientific codes.
+A typical call site that compresses a batch with LZ4 differs from
+its nvCOMP counterpart only in the prefix of the entry-point names
+(\texttt{arctoBatchedLZ4*} versus
+\texttt{nvcompBatchedLZ4*}); the argument order, types, and
+asynchronous semantics are identical, so a CUDA-targeted
+application can switch backend with an \texttt{\#ifdef} swap of the
+function names. This compatibility is what enables the end-to-end
+comparison reported in Section~\ref{sec:evaluation} to be measured
+at matched algorithmic configurations.
+
+\subsection{Optimization roadmap}
+\label{sec:arcto-optim-roadmap}
+
+The substrate just described is what \arcto{} inherits and extends
+on top of the \nvcomp{} port. The two profile-driven optimizations
+that constitute the contributions of the present work are layered on
+top of this substrate without modifying the algorithmic kernels or
+the public ABI. The first, presented in
+Section~\ref{sec:optim-chunk-size}, is kernel-side: it replaces the
+inherited default chunk size with a per-architecture wave-saturation
+budget that fills the CU array in a single launch, and is exposed
+through a single launch parameter (\texttt{chunk\_size}) on every
+batched entry point. The second, presented in
+Section~\ref{sec:optim-adaptive-tiled}, is transfer-side: it
+replaces the textbook single-shot pinned-host staging with a
+window-based pipeline whose window size is selected by a cost model
+and refined online during the call, and is exposed through a new
+public entry point (\texttt{arctoHostBatchAdaptive}) that coexists
+with the existing single-shot \texttt{arctoHostBatch} variant. Both
+changes are additive at the API level and preserve the
+binary-compatibility guarantee of
+Section~\ref{sec:arcto-constraints}.
+
+\subsection{Repository structure and reproducibility}
+\label{sec:arcto-repro}
+
+The source tree splits cleanly into the public headers
+(\texttt{include/arcto/}), the algorithm implementations
+(\texttt{src/lowlevel/}), the benchmark suite
+(\texttt{benchmarks/}), and a test suite driven by \texttt{ctest}
+that automates the round-trip correctness checks. The benchmark
+binaries are the same artefacts used to produce every CSV reported
+in this paper, with hash-stable outputs across architectures for the
+lossless cases so that regression testing is meaningful.
+
+The build and execution environment is containerized using
+Singularity, the standard container runtime in HPC due to its
+rootless execution model and native GPU passthrough. The container
+image is based on Ubuntu~22.04 with ROCm~7.0.1 and accepts the GPU
+architecture as a build-time argument, so the same software stack is
+used across all platforms while still producing
+architecture-specific binaries (one Singularity image per
+\texttt{gfx<arch>}). Each measurement campaign archives the SIF
+image hash alongside the raw CSVs, which combined with the
+benchmark-binary commit hash makes the data-plus-code-plus-container
+triple that produced any reported figure fully recoverable.

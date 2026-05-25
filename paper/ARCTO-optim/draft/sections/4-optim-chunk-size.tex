@@ -1,0 +1,164 @@
+\section{Optimization~1: Wave-Saturation Chunk Sizing}
+\label{sec:optim-chunk-size}
+
+The first \arcto{} optimization is kernel-side: it concerns the chunk
+size at which the batched compression and decompression kernels are
+dispatched. The decision is purely a launch parameter, hidden from the
+algorithmic kernels themselves, and it applies identically to LZ4,
+Snappy, and Cascaded. The goal of this section is to make the
+chunk-size choice fall out of a per-architecture constant that
+\arcto{} can compute once at context-creation time, replacing the
+NVIDIA-tuned default inherited from the \nvcomp{} codebase.
+
+\subsection{Why the inherited default under-utilizes AMD GPUs}
+\label{sec:chunk-motivation}
+
+The \nvcomp{} batched API was tuned on NVIDIA GPUs whose wavefronts
+are 32 threads wide and whose SM counts and L1 sizes differ from their
+AMD counterparts. Its default chunk size, on the order of tens of
+kibibytes, was selected so that each thread block fits comfortably in
+shared memory on Volta-class hardware and so that a batch of a few
+thousand chunks is enough to fill the SM array. On AMD wavefronts of
+32 lanes (RDNA~3) or 64 lanes (the CDNA family), the same default
+produces a chunk count that is several times larger than what the CU
+array can absorb in a single wave, and each individual chunk is small
+enough that its kernel-startup overhead dominates its useful work.
+
+The characterization study that preceded the present work measured
+this effect across the same four architectures targeted
+here~\cite{anon_iccsa2026} and found that, at the inherited default,
+the AMD kernels achieve roughly half of their attainable throughput on
+inputs above a few hundred megabytes. The lost throughput is not
+algorithmic; it is structural, and a different launch decision
+recovers it without touching the kernels.
+
+\subsection{Wave-saturation as the right-sizing principle}
+\label{sec:chunk-formula}
+
+The principle that drives \arcto{}'s chunk-size choice is wave
+saturation. A given AMD GPU exposes $N_{\text{CU}}$ compute units,
+each able to host $W_{\text{max}}$ resident wavefronts of $w$ threads.
+The \emph{wave-slot capacity} of the device is the product
+
+\[
+S \;=\; N_{\text{CU}} \cdot W_{\text{max}} \cdot w,
+\]
+
+which is the largest number of threads that can be in flight
+simultaneously. Once the input is partitioned into a number of chunks
+sufficient to occupy $S$ wave slots, additional fragmentation buys no
+extra parallelism: it only adds per-chunk metadata, per-launch
+overhead, and host-side bookkeeping. Conversely, if the partitioning
+produces fewer than $S$ wavefronts, the CU array is left partially
+idle for the duration of the launch.
+
+The operational rule, given an input of length $L$ and a target wave
+budget $S$, is to pick a chunk size $C$ such that the number of chunks
+$\lceil L / C \rceil$ is just enough to fill $S$ once. In practice
+\arcto{} captures this through a per-architecture constant
+$W_{\text{sat}}$ that absorbs both the wave-slot capacity and the
+per-byte wavefront yield of the kernels:
+
+\[
+C_{\text{opt}}(L) \;=\;
+\max\!\left(W_{\text{sat}},\;
+            \left\lceil \frac{L}{\lceil L / W_{\text{sat}}\rceil}\right\rceil
+     \right).
+\]
+
+The first argument of the $\max$ enforces the per-arch lower bound:
+any chunk smaller than $W_{\text{sat}}$ leaves the CU array
+under-fed, regardless of how large $L$ is. The second argument is the
+input-driven adjustment that keeps the per-launch chunk size
+proportional to the input length once it is large enough to matter,
+which avoids producing a single oversized chunk on inputs that exceed
+$W_{\text{sat}}$ by orders of magnitude.
+
+\subsection{Per-architecture calibration of $W_{\text{sat}}$}
+\label{sec:chunk-calibration}
+
+The value of $W_{\text{sat}}$ is determined empirically, once per
+architecture, by sweeping the chunk size at fixed input size and
+recording the kernel-only throughput. The sweep is bounded below by
+$4$\,KiB (the practical minimum for a meaningful kernel launch) and
+above by $1$\,GiB (beyond which the kernel becomes
+memory-bandwidth-bound and chunk size ceases to matter). The knee of
+the throughput-versus-chunk-size curve, defined as the smallest chunk
+size that reaches within 5\,\% of the curve's plateau, gives
+$W_{\text{sat}}$. Table~\ref{tab:wsat} reports the calibrated values
+for the four target architectures.
+
+\begin{table}[t]
+\centering
+\caption{Calibrated wave-saturation budget per architecture.}
+\label{tab:wsat}
+\begin{tabular}{lrr}
+\toprule
+Architecture & CUs & $W_{\text{sat}}$ (MiB) \\
+\midrule
+gfx906  (MI50)        &  60 & 15 \\
+gfx90a  (MI210)       & 104 & 52 \\
+gfx942  (MI300X)      & 304 & 76 \\
+gfx1100 (RX 7900 XT)  &  84 & 48 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The progression from gfx906 through gfx942 tracks the roughly
+fivefold growth in CU count across the CDNA generations. The RDNA~3
+value sits between gfx90a and gfx942 because the per-CU wavefront
+capacity on RDNA~3 is higher (the architecture exposes configurable
+wave32 and wave64 modes, and the present measurements use wave32) even
+though the absolute CU count is smaller than gfx942's. The single
+table is the only piece of \arcto{} that needs to be revisited when a
+new AMD generation is targeted; the surrounding formula and the API
+exposure are unchanged.
+
+\subsection{Exposure in the \arcto{} API}
+\label{sec:chunk-api}
+
+The chunk size is a single launch parameter (\texttt{chunk\_size}) on
+every batched entry point in the \arcto{} public API. The library
+applies $C_{\text{opt}}$ as the default whenever the application
+passes the sentinel value \texttt{0}, and forwards an explicit
+non-zero value unchanged. Applications that have an external reason
+to pin the chunk size, such as matching a host-side buffer layout or
+reproducing a measurement campaign, keep full control. Applications
+that do not care receive the wave-saturated value without writing any
+code beyond the existing nvCOMP-style call.
+
+The lookup of $W_{\text{sat}}$ from the per-architecture table happens
+once at \texttt{arctoCreateContext} time, by querying
+\texttt{hipGetDeviceProperties} for the active device's
+\texttt{gcnArchName} string. There is no per-launch dispatch on
+architecture inside the hot kernels themselves, which preserves the
+constraint stated in Section~\ref{sec:arcto-constraints} that
+per-architecture tuning must not add branches in the critical path.
+
+\subsection{Measured impact}
+\label{sec:chunk-impact}
+
+A preliminary sweep across the four target architectures, whose full
+matrix is reported in Section~\ref{sec:evaluation}, shows that
+replacing the inherited default with $C_{\text{opt}}$ delivers a
+kernel-only speedup of up to $2.87\times$ on gfx942 at the
+$16$\,GiB input size, with monotone improvements at smaller inputs
+once $L$ exceeds $2 \cdot W_{\text{sat}}$. Below that threshold the
+input is too small to fill the CU array regardless of chunk size, and
+the formula correctly recovers a single-launch decision (the second
+argument of the $\max$ collapses to $L$ itself). The benefit is
+algorithm-independent: LZ4, Snappy, and Cascaded all see speedups
+within a factor of $1.3\times$ of one another at the same $(L,
+\text{arch})$ pair, which confirms the modelling assumption that the
+per-byte wavefront yield is roughly constant across the three
+byte-level codecs and justifies a single per-arch table rather than a
+per-algorithm one.
+
+This first optimization addresses on-GPU compute time only. Even with
+a wave-saturated chunk size, the end-to-end pipeline remains dominated
+by host-to-device transfer and host-side allocation whenever the input
+does not already reside in pinned device-visible memory, which is the
+default situation for production scientific codes. The second
+optimization, presented in Section~\ref{sec:optim-adaptive-tiled},
+addresses that transfer-side cost using a complementary cost model
+that tiles the transfer rather than the kernel.

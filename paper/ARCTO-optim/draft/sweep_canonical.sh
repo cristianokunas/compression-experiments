@@ -1,14 +1,46 @@
 #!/bin/bash
 # Canonical sweep driver for the SBAC-PAD'26 paper.
 #
-# Runs the full (algo x data_type x size x mode) matrix on a single
-# AMD GPU using the local scratch for the canonical datasets to keep
-# the home quota free (datasets are regenerated per job, not stored).
+# Runs the full matrix on a single AMD GPU using the local scratch for
+# the canonical datasets to keep the home quota free (datasets are
+# regenerated per job, not stored).
 #
-# Algorithms : lz4, snappy, cascaded
-# Data types : tti, zeros, random, binary
-# Sizes      : 10mb, 100mb, 1gb, 4gb, 8gb, 16gb  (filtered by VRAM cap)
-# Modes      : baseline, pinned, adaptive
+# The matrix is split in two blocks:
+#
+# Block A -- lossless transfer-side comparison on chunked byte-level codecs
+#            (3 algos x 4 dtypes x 6 sizes x 3 modes = 216 cells
+#             before VRAM filtering)
+#   Algorithms : lz4, snappy, cascaded   (chunked batched template
+#                                         shared via benchmark_*_chunked)
+#   Data types : tti, zeros, random, binary
+#   Sizes      : 10mb, 100mb, 1gb, 4gb, 8gb, 16gb
+#   Modes      : baseline, pinned, adaptive  (chunked-template -P/-A flags)
+#
+# Block B -- ZFP whole-field throughput-vs-quality, TTI only
+#            (1 algo x 1 dtype x 6 sizes x 11 configs = 66 cells
+#             before VRAM filtering)
+#   Algorithm  : zfp                     (single-call benchmark_zfp_single)
+#   Data type  : tti  (only floating-point dataset in the suite)
+#   Sizes      : 10mb, 100mb, 1gb, 4gb, 8gb, 16gb
+#   Modes      : fixed_accuracy  tau in {1e-3, 1e-4, 1e-5, 1e-6}  (4 cells)
+#                fixed_rate      bits/value in {4, 8, 16, 24}     (4 cells)
+#                fixed_precision precision in {8, 16, 24}         (3 cells)
+#
+# Reversible mode (lossless ZFP) is exposed by the API but excluded from
+# this campaign: arctoZFPReversible3D is currently broken at >= 4 GB input
+# on gfx1100 (see ISSUE_arctoZFPReversible3D_4GB_fails_gfx1100.md in the
+# arcto repository). The three canonical lossy modes are well behaved at
+# every size and carry the ZFP story for this paper.
+#
+# Rationale for ZFP outside the chunked block: ZFP's block-floating-point
+# transform operates on whole-field 3D input and does not share the
+# per-chunk window pipeline that the byte-level codecs use. It is therefore
+# benchmarked through its dedicated single-call entry point, which already
+# emits quality metrics (max_abs_diff, rmse, psnr_db, max_rel_err).
+#
+# Trim policy if walltime is tight: drop fixed_precision first (its story
+# is secondary to fixed_accuracy + fixed_rate), then the smallest accuracies
+# and most-aggressive rates.
 #
 # Environment variables (override on the command line):
 #   ARCTO_BIN_DIR  path to benchmark_lz4_chunked etc.
@@ -137,27 +169,55 @@ echo "MAX_GB_FOR_GPU=$MAX_GB_FOR_GPU" > "$RESULTS_DIR/_config.txt"
 
 DATA_TYPES="tti zeros random binary"
 SIZES="10mb 100mb 1gb 4gb 8gb 16gb"
-ALGOS="lz4 snappy cascaded"
-MODES="baseline pinned adaptive"
+
+# Block A: chunked byte-level codecs
+LOSSLESS_ALGOS="lz4 snappy cascaded"
+LOSSLESS_MODES="baseline pinned adaptive"
+
+# Block B: ZFP whole-field via benchmark_zfp_single (canonical lossy modes
+# only; reversible deferred -- see ISSUE_arctoZFPReversible3D_4GB_fails_gfx1100.md)
+LOSSY_DTYPE="tti"
+ZFP_ACCURACIES="1e-3 1e-4 1e-5 1e-6"
+ZFP_RATES="4 8 16 24"          # bits/value, fixed_rate guarantees ratio = 32/rate
+ZFP_PRECISIONS="8 16 24"       # bit-plane precision
+
+# ZFP requires a 3D shape; the canonical TTI slices are 1D byte streams.
+# We pick a (nx, ny, nz) per size whose product equals the float count of
+# the slice. All dims are multiples of 4 so they satisfy ZFP's block
+# alignment.
+declare -A ZFP_SHAPES=(
+  [10mb]="128,128,160"
+  [100mb]="256,256,400"
+  [1gb]="512,512,1024"
+  [4gb]="1024,1024,1024"
+  [8gb]="1024,1024,2048"
+  [16gb]="1024,1024,4096"
+)
 
 n_done=0
 n_total=0
-# pre-count for the progress display
+# pre-count for the progress display (Block A + Block B)
 for size in $SIZES; do
   size_gb=$(size_to_gb "$size")
-  if [ "$size_gb" -le "$MAX_GB_FOR_GPU" ]; then
-    for dtype in $DATA_TYPES; do
-      [ -f "$DATA_DIR/${dtype}_${size}.bin" ] || continue
-      for algo in $ALGOS; do
-        for mode in $MODES; do
-          n_total=$((n_total + 1))
-        done
+  [ "$size_gb" -le "$MAX_GB_FOR_GPU" ] || continue
+  for dtype in $DATA_TYPES; do
+    [ -f "$DATA_DIR/${dtype}_${size}.bin" ] || continue
+    for algo in $LOSSLESS_ALGOS; do
+      for mode in $LOSSLESS_MODES; do
+        n_total=$((n_total + 1))
       done
     done
+  done
+  # Block B (ZFP whole-field, TTI only): fixed_accuracy + fixed_rate + fixed_precision
+  if [ -f "$DATA_DIR/${LOSSY_DTYPE}_${size}.bin" ]; then
+    for acc  in $ZFP_ACCURACIES;  do n_total=$((n_total + 1)); done
+    for rate in $ZFP_RATES;       do n_total=$((n_total + 1)); done
+    for prec in $ZFP_PRECISIONS;  do n_total=$((n_total + 1)); done
   fi
 done
 echo "will run $n_total benchmark invocations"
 
+# --- Block A: lossless byte-level codecs (chunked template) --------------
 for size in $SIZES; do
   size_gb=$(size_to_gb "$size")
   if [ "$size_gb" -gt "$MAX_GB_FOR_GPU" ]; then
@@ -165,19 +225,19 @@ for size in $SIZES; do
     continue
   fi
 
-  # smaller iter count for the big workloads to keep job time bounded
-  if [ "$size_gb" -ge 8 ]; then
-    iters="${ITERS:-3}"
-  else
-    iters="${ITERS:-5}"
-  fi
+  # 30 measured iterations + 5 warmups gives statistically meaningful
+  # per-cell stddev (the binary emits Comp/Decomp throughput stddev and
+  # time stddev columns). Override on the command line via
+  # ITERS=<N> WARMUP=<N>.
+  iters="${ITERS:-30}"
+  warmup="${WARMUP:-5}"
 
   for dtype in $DATA_TYPES; do
     input="$DATA_DIR/${dtype}_${size}.bin"
     [ -f "$input" ] || { echo "[skip] $input missing"; continue; }
 
-    for algo in $ALGOS; do
-      for mode in $MODES; do
+    for algo in $LOSSLESS_ALGOS; do
+      for mode in $LOSSLESS_MODES; do
         case "$mode" in
           baseline) flags="-P false -A false" ;;
           pinned)   flags="-P true  -A false" ;;
@@ -185,15 +245,70 @@ for size in $SIZES; do
         esac
         csv="$RESULTS_DIR/${dtype}_${size}_${algo}_${mode}.csv"
         n_done=$((n_done + 1))
-        printf "[%3d/%3d %s] %-8s %-5s %-9s %-9s\n" \
+        printf "[%3d/%3d %s] %-8s %-5s %-15s %-9s\n" \
           "$n_done" "$n_total" "$(date +%H:%M:%S)" "$dtype" "$size" "$algo" "$mode"
         singularity exec --rocm "$SIF" bash -c \
           "LD_LIBRARY_PATH=$ARCTO_LIB_DIR:\$LD_LIBRARY_PATH \
            $ARCTO_BIN_DIR/benchmark_${algo}_chunked \
-             -f $input -c true $flags -R true -w 1 -i $iters" \
+             -f $input -c true $flags -R true -w $warmup -i $iters" \
           > "$csv" 2> "$csv.stderr" || echo "  FAIL: see $csv.stderr"
       done
     done
+  done
+done
+
+# --- Block B: ZFP whole-field via benchmark_zfp_single (TTI only) --------
+# Single-call binary: -m <mode> -r <param> -3 <nx,ny,nz> -c -w N -i N
+# CSV always includes fidelity metrics (max_abs_diff, rmse, psnr, max_rel).
+# Reversible mode deferred (see header comment).
+zfp_run_cell() {
+  local input="$1" shape="$2" mode="$3" param="$4" tag="$5"
+  local iters="$6" warmup="$7"
+  local csv="$RESULTS_DIR/${LOSSY_DTYPE}_${SIZE_LABEL}_zfp_${tag}.csv"
+  n_done=$((n_done + 1))
+  printf "[%3d/%3d %s] %-8s %-5s %-20s\n" \
+    "$n_done" "$n_total" "$(date +%H:%M:%S)" \
+    "$LOSSY_DTYPE" "$SIZE_LABEL" "zfp/${mode}=${param}"
+  singularity exec --rocm "$SIF" bash -c \
+    "LD_LIBRARY_PATH=$ARCTO_LIB_DIR:\$LD_LIBRARY_PATH \
+     $ARCTO_BIN_DIR/benchmark_zfp_single \
+       -f $input -3 $shape -m $mode -r $param \
+       -c -w $warmup -i $iters" \
+    > "$csv" 2> "$csv.stderr" || echo "  FAIL: see $csv.stderr"
+}
+
+for size in $SIZES; do
+  size_gb=$(size_to_gb "$size")
+  if [ "$size_gb" -gt "$MAX_GB_FOR_GPU" ]; then
+    continue
+  fi
+
+  iters="${ITERS:-30}"
+  warmup="${WARMUP:-5}"
+
+  input="$DATA_DIR/${LOSSY_DTYPE}_${size}.bin"
+  [ -f "$input" ] || { echo "[skip-zfp] $input missing"; continue; }
+  shape="${ZFP_SHAPES[$size]:-}"
+  if [ -z "$shape" ]; then
+    echo "[skip-zfp] no ZFP_SHAPES entry for $size"
+    continue
+  fi
+  SIZE_LABEL="$size"
+
+  # B.1 -- fixed_accuracy at 4 tolerance points (absolute error bound)
+  for acc in $ZFP_ACCURACIES; do
+    acc_tag=$(echo "$acc" | tr -d '-')
+    zfp_run_cell "$input" "$shape" "fixed_accuracy" "$acc" "acc${acc_tag}" "$iters" "$warmup"
+  done
+
+  # B.2 -- fixed_rate at 4 bits/value points (guarantees output size)
+  for rate in $ZFP_RATES; do
+    zfp_run_cell "$input" "$shape" "fixed_rate" "$rate" "rate${rate}" "$iters" "$warmup"
+  done
+
+  # B.3 -- fixed_precision at 3 bit-plane precision points
+  for prec in $ZFP_PRECISIONS; do
+    zfp_run_cell "$input" "$shape" "fixed_precision" "$prec" "prec${prec}" "$iters" "$warmup"
   done
 done
 
