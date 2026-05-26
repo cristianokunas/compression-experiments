@@ -17,14 +17,22 @@
 #   Modes      : baseline, pinned, adaptive  (chunked-template -P/-A flags)
 #
 # Block B -- ZFP whole-field throughput-vs-quality, TTI only
-#            (1 algo x 1 dtype x 6 sizes x 11 configs = 66 cells
+#            (1 algo x 1 dtype x 6 sizes x 13 configs = 78 cells
 #             before VRAM filtering)
 #   Algorithm  : zfp                     (single-call benchmark_zfp_single)
 #   Data type  : tti  (only floating-point dataset in the suite)
 #   Sizes      : 10mb, 100mb, 1gb, 4gb, 8gb, 16gb
-#   Modes      : fixed_accuracy  tau in {1e-3, 1e-4, 1e-5, 1e-6}  (4 cells)
-#                fixed_rate      bits/value in {4, 8, 16, 24}     (4 cells)
-#                fixed_precision precision in {8, 16, 24}         (3 cells)
+#   Modes      : fixed_accuracy  tau in {1e-3 .. 1e-6, 1e-9, 1e-12}  (6 cells)
+#                fixed_rate      bits/value in {4, 8, 16, 24}        (4 cells)
+#                fixed_precision precision in {8, 16, 24}            (3 cells)
+#
+# Tolerance range rationale: the fixed_accuracy points span the regime
+# validated by Barbosa & Coutinho 2023 (1e-6 preserves the RTM migrated
+# image, 1e-4 damages it; both reported on the Marmousi benchmark) up to
+# the wavefield-fidelity envelope established by Lindstrom, Chen & Lee 2016
+# (1e-13 .. 1e-16, validated against the F3DT sensitivity kernel). The 1e-9
+# and 1e-12 points fill the gap between the two regimes and let the
+# present paper report a continuous throughput-vs-error trade-off.
 #
 # Reversible mode (lossless ZFP) is exposed by the API but excluded from
 # this campaign: arctoZFPReversible3D is currently broken at >= 4 GB input
@@ -177,7 +185,7 @@ LOSSLESS_MODES="baseline pinned adaptive"
 # Block B: ZFP whole-field via benchmark_zfp_single (canonical lossy modes
 # only; reversible deferred -- see ISSUE_arctoZFPReversible3D_4GB_fails_gfx1100.md)
 LOSSY_DTYPE="tti"
-ZFP_ACCURACIES="1e-3 1e-4 1e-5 1e-6"
+ZFP_ACCURACIES="1e-3 1e-4 1e-5 1e-6 1e-9 1e-12"
 ZFP_RATES="4 8 16 24"          # bits/value, fixed_rate guarantees ratio = 32/rate
 ZFP_PRECISIONS="8 16 24"       # bit-plane precision
 
