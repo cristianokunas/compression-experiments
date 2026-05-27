@@ -132,12 +132,31 @@ if [ "${GEN_ONLY:-0}" = "1" ]; then
 fi
 
 # -------------------------------------------------------------------
-# Stage 2: determine the per-GPU size cap
+# Stage 2: detect GPU arch and pick MAX_GB_FOR_GPU + per-algorithm
+# kernel-visible chunk size C_KER_OPT_<algo>.
+#
+# The offline chunk sweeps (MI300X_CHUNK_SWEEP, RX7900XT_CHUNK_SWEEP)
+# showed that the kernel-throughput optimum depends on BOTH the GPU
+# architecture AND the algorithm:
+#
+#   gfx1100 (RX 7900 XT):  LZ4= 8 KiB, Snappy=16 KiB, Cascaded=64 KiB
+#   gfx942  (MI300X):      LZ4= 8 KiB, Snappy= 8 KiB, Cascaded= 8 KiB
+#   gfx90a  (MI210):       no dedicated sweep yet; conservative defaults
+#   gfx906  (MI50):        no dedicated sweep yet; conservative defaults
+#
+# These are passed as -p to every chunked benchmark so the canonical
+# evaluation reflects the best chunk per (arch, algo), combining both
+# ARCTO optimizations -- wave-aware kernel chunking AND adaptive
+# pinned aggregation -- in the same run.
 # -------------------------------------------------------------------
-if [ -z "${MAX_GB_FOR_GPU:-}" ]; then
-  # Detect arch via rocm-smi (works under singularity --rocm)
+need_detect=0
+if [ -z "${MAX_GB_FOR_GPU:-}" ]; then need_detect=1; fi
+if [ -z "${C_KER_OPT_LZ4:-}${C_KER_OPT_SNAPPY:-}${C_KER_OPT_CASCADED:-}" ]; then need_detect=1; fi
+if [ "$need_detect" = "1" ]; then
   ARCH=$(singularity exec --rocm "$SIF" rocminfo 2>/dev/null \
          | grep -m1 "gfx[0-9]" | awk '{print $2}' || echo unknown)
+fi
+if [ -z "${MAX_GB_FOR_GPU:-}" ]; then
   case "$ARCH" in
     gfx906)  MAX_GB_FOR_GPU=4  ;;  # MI50 32 GB
     gfx90a)  MAX_GB_FOR_GPU=8  ;;  # MI210 64 GB (or 16 if VRAM allows)
@@ -145,8 +164,31 @@ if [ -z "${MAX_GB_FOR_GPU:-}" ]; then
     gfx1100) MAX_GB_FOR_GPU=4  ;;  # RX 7900 XT 20 GB
     *)       MAX_GB_FOR_GPU=4  ;;
   esac
-  echo "detected arch=$ARCH, using MAX_GB_FOR_GPU=$MAX_GB_FOR_GPU"
 fi
+# Per-(arch, algo) defaults. Each algo gets its own env var so callers
+# can override individually.
+case "$ARCH" in
+  gfx906)
+    : "${C_KER_OPT_LZ4:=16384}"; : "${C_KER_OPT_SNAPPY:=16384}"; : "${C_KER_OPT_CASCADED:=65536}"
+    ;;
+  gfx90a)
+    : "${C_KER_OPT_LZ4:=16384}"; : "${C_KER_OPT_SNAPPY:=16384}"; : "${C_KER_OPT_CASCADED:=65536}"
+    ;;
+  gfx942)
+    : "${C_KER_OPT_LZ4:=8192}";  : "${C_KER_OPT_SNAPPY:=8192}";  : "${C_KER_OPT_CASCADED:=8192}"
+    ;;
+  gfx1100)
+    : "${C_KER_OPT_LZ4:=8192}";  : "${C_KER_OPT_SNAPPY:=16384}"; : "${C_KER_OPT_CASCADED:=65536}"
+    ;;
+  *)
+    : "${C_KER_OPT_LZ4:=65536}"; : "${C_KER_OPT_SNAPPY:=65536}"; : "${C_KER_OPT_CASCADED:=65536}"
+    ;;
+esac
+echo "detected arch=$ARCH"
+echo "  MAX_GB_FOR_GPU=$MAX_GB_FOR_GPU"
+echo "  C_KER_OPT_LZ4=$C_KER_OPT_LZ4 ($((C_KER_OPT_LZ4 / 1024)) KiB)"
+echo "  C_KER_OPT_SNAPPY=$C_KER_OPT_SNAPPY ($((C_KER_OPT_SNAPPY / 1024)) KiB)"
+echo "  C_KER_OPT_CASCADED=$C_KER_OPT_CASCADED ($((C_KER_OPT_CASCADED / 1024)) KiB)"
 
 # Convert size_name to GB integer for comparison
 size_to_gb() {
@@ -173,7 +215,13 @@ date -Iseconds > "$RESULTS_DIR/_date.txt"
 sha256sum "$SIF" | awk '{print $1}' > "$RESULTS_DIR/_sif_sha256.txt"
 (cd "$(dirname "$ARCTO_BIN_DIR")/.." 2>/dev/null && git rev-parse HEAD) > "$RESULTS_DIR/_arcto_commit.txt" 2>/dev/null || true
 (cd "$(dirname "$ARCTO_BIN_DIR")/.." 2>/dev/null && git rev-parse --abbrev-ref HEAD) > "$RESULTS_DIR/_arcto_branch.txt" 2>/dev/null || true
-echo "MAX_GB_FOR_GPU=$MAX_GB_FOR_GPU" > "$RESULTS_DIR/_config.txt"
+{
+  echo "ARCH=${ARCH:-unknown}"
+  echo "MAX_GB_FOR_GPU=$MAX_GB_FOR_GPU"
+  echo "C_KER_OPT_LZ4=$C_KER_OPT_LZ4"
+  echo "C_KER_OPT_SNAPPY=$C_KER_OPT_SNAPPY"
+  echo "C_KER_OPT_CASCADED=$C_KER_OPT_CASCADED"
+} > "$RESULTS_DIR/_config.txt"
 
 DATA_TYPES="tti zeros random binary"
 SIZES="10mb 100mb 1gb 4gb 8gb 16gb"
@@ -245,6 +293,14 @@ for size in $SIZES; do
     [ -f "$input" ] || { echo "[skip] $input missing"; continue; }
 
     for algo in $LOSSLESS_ALGOS; do
+      # Select the per-algorithm kernel chunk size determined in Stage 2
+      case "$algo" in
+        lz4)      chunk_size=$C_KER_OPT_LZ4 ;;
+        snappy)   chunk_size=$C_KER_OPT_SNAPPY ;;
+        cascaded) chunk_size=$C_KER_OPT_CASCADED ;;
+        *)        chunk_size=65536 ;;
+      esac
+
       for mode in $LOSSLESS_MODES; do
         case "$mode" in
           baseline) flags="-P false -A false" ;;
@@ -253,12 +309,15 @@ for size in $SIZES; do
         esac
         csv="$RESULTS_DIR/${dtype}_${size}_${algo}_${mode}.csv"
         n_done=$((n_done + 1))
-        printf "[%3d/%3d %s] %-8s %-5s %-15s %-9s\n" \
-          "$n_done" "$n_total" "$(date +%H:%M:%S)" "$dtype" "$size" "$algo" "$mode"
+        printf "[%3d/%3d %s] %-8s %-5s %-15s %-9s chunk=%dKiB\n" \
+          "$n_done" "$n_total" "$(date +%H:%M:%S)" "$dtype" "$size" \
+          "$algo" "$mode" "$((chunk_size/1024))"
         singularity exec --rocm "$SIF" bash -c \
           "LD_LIBRARY_PATH=$ARCTO_LIB_DIR:\$LD_LIBRARY_PATH \
            $ARCTO_BIN_DIR/benchmark_${algo}_chunked \
-             -f $input -c true $flags -R true -w $warmup -i $iters" \
+             -f $input -c true $flags -R true \
+             -p $chunk_size \
+             -w $warmup -i $iters" \
           > "$csv" 2> "$csv.stderr" || echo "  FAIL: see $csv.stderr"
       done
     done
