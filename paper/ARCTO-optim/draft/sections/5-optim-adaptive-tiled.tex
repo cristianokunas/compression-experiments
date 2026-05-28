@@ -1,195 +1,184 @@
-\section{Optimization~2: Adaptive Tiled Aggregation}
+\section{Pinned Adaptive Aggregation}
 \label{sec:optim-adaptive-tiled}
 
-The second \arcto{} optimization is transfer-side. It targets the
-host-to-device pipeline that surrounds the compression kernel and that
-dominates end-to-end time once the kernel itself is wave-saturated by
-the mechanism of Section~\ref{sec:optim-chunk-size}. The optimization
-takes the form of a new public entry point,
-\texttt{arctoHostBatchAdaptive}, that coexists with the existing
-single-shot \texttt{arctoHostBatch} variant and exposes a window-based
-pipeline driven by a cost model and refined online.
+The second \arcto{} optimization targets the host-device transfer
+path. The pageable baseline is simple but slow: on a 1\,GiB TTI
+input on the RX 7900 XT (gfx1100), pageable Cascaded spends
+154.98\,ms in H2D and 151.66\,ms in D2H, with a total of 324.15\,ms;
+the kernel itself contributes only a few milliseconds. Snappy and LZ4
+on the same input show the same pattern, with pageable totals of
+346.28\,ms and 447.34\,ms respectively. Pinned host staging is the
+standard remedy because it removes the page-pinning step from the
+critical path and unlocks bulk PCIe bandwidth, but the question of
+\emph{how much} pinned memory to allocate, and \emph{when}, controls
+whether the gain materializes.
 
-\subsection{The single-shot pinned-host trap}
-\label{sec:tile-motivation}
+\subsection{Pinned full versus pinned bounded}
+\label{sec:pinned-tradeoff}
 
-The textbook prescription for hiding PCIe latency in a host-driven
-GPU workload is to allocate a pinned host buffer of the same size as
-the input, memcpy the input into it, transfer the whole buffer to the
-device, and launch the kernel. This is what the
-\texttt{arctoHostBatch} entry point does, mirroring the equivalent
-\nvcomp{} call. Reported in isolation, with the allocation cost
-amortized away or treated as a one-off setup expense, this single-shot
-pinned variant looks faster than the pageable-source baseline that
-lets HIP page through automatically.
+The most direct way to use pinned memory is to allocate a host buffer
+the same size as the input, copy the pageable source into it, and
+issue a single bulk H2D. For the 1\,GiB TTI workload above, this
+strategy brings H2D and D2H down to roughly 39\,ms each across the
+three codecs and reduces the measured pipeline time from 324\,ms to
+96\,ms for Cascaded, from 346\,ms to 118\,ms for Snappy, and from
+447\,ms to 220\,ms for LZ4. The kernel-visible behavior is unchanged;
+all the difference comes from the transfer path.
 
-Honestly accounted, however, the single-shot variant is a trap. The
-pinned-host allocation throughput on the four target platforms is
-roughly $220$\,MB/s, two orders of magnitude below the PCIe transfer
-bandwidth itself. Allocating a $16$\,GiB pinned buffer therefore
-takes about $72$\,seconds before the first byte moves to the device,
-which is more than the whole pageable-source pipeline would have
-needed. When the allocation cost is included in the end-to-end time,
-the single-shot pinned variant is between $0.39\times$ and
-$0.59\times$ as fast as the baseline across the four architectures, a
-negative speedup that the literature glosses over because the
-allocation is treated as outside the measurement window. The
-adaptive tiled optimization presented in the remainder of this
-section closes this gap and turns the transfer-side hand into a net
-positive, but the starting point has to be acknowledged: the apparent
-single-shot win is an accounting artefact, not a real one.
+What the kernel-visible time hides is the cost of the pinned buffer
+itself. The same Cascaded run pays 227.49\,ms of pinned allocation
+and 96.55\,ms of host-to-host staging to copy the 1\,GiB input into
+the pinned region. Snappy and LZ4 show the same overhead structure
+(229--221\,ms of allocation and 96\,ms of staging). Whether these
+costs matter depends on usage: if the pinned buffer is reused across
+many compression calls, the allocation amortizes; if it is created
+per call, the pinned advantage is more apparent than real. Either
+way, the pinned-memory \emph{footprint} scales with the input. A
+4\,GiB input requires a 4\,GiB pinned allocation, which is a scarce
+host resource that may conflict with other components of the
+application.
 
-\subsection{Cost model for the tiled pipeline}
-\label{sec:tile-cost-model}
+\arcto{} resolves this with an adaptive pinned aggregation path that
+allocates a fixed-size pinned window once and reuses it across
+successive portions of the input. The kernel-visible chunks
+$C_{\text{ker}}$ remain small, as established in
+Section~\ref{sec:optim-chunk-size}; many such chunks are grouped into
+a single pinned window of size $W_{\text{agg}}$. For an input of
+length $L$, the runtime processes
+$N_{\text{windows}} = \lceil L / W_{\text{agg}} \rceil$ windows in
+sequence, reusing the same pinned buffer. The peak pinned-memory
+footprint is therefore $W_{\text{agg}}$ rather than $L$, regardless
+of how large the input is.
 
-The adaptive variant replaces the single full-input pinned buffer
-with a single fixed-size window of $W$ bytes that is allocated once
-and reused for every tile. The input of length $L$ is processed in
-$\lceil L/W \rceil$ successive tiles, each of which traverses four
-phases:
+\subsection{Three-floor rule for the aggregation window}
+\label{sec:three-floor-rule}
 
-\begin{enumerate}
-  \item a host-to-host memcpy from the pageable source into the
-        pinned window, at throughput $R_{\text{h2h}}$
-        ($\approx 11$\,GB/s on the target platforms);
-  \item a host-to-device PCIe transfer of the pinned window, at
-        throughput $R_{\text{pcie}}$ ($\approx 25$\,GB/s);
-  \item kernel execution on the tile, of duration $T_k(W)$;
-  \item a device-to-host transfer of the compressed output, which is
-        small enough compared to the input that it is ignored in the
-        model and absorbed by the measurement.
-\end{enumerate}
-
-The pinned-window allocation itself, at throughput
-$R_{\text{alloc}} \approx 220$\,MB/s, is paid once per call rather
-than once per tile. The end-to-end time is therefore
-
+The aggregation window cannot be chosen by a single criterion because
+three distinct overheads must be amortized: kernel underutilization,
+PCIe setup, and per-window launch bookkeeping. \arcto{} therefore
+selects $W_{\text{agg}}$ as the maximum of three architecture-aware
+floors, so that whichever overhead is binding is the one that sets
+the window size:
 \[
-T(L, W) \;\approx\; \frac{W}{R_{\text{alloc}}}
-                  \;+\; \left\lceil \frac{L}{W} \right\rceil
-                        \cdot T_{\text{tile}}(W),
+W_{\text{agg}}^{*} =
+\max\left(W_{\text{kernel\_sat}},\ W_{\text{pcie\_amort}},\
+W_{\text{launch\_amort}}\right).
 \]
+The kernel-saturation floor combines the kernel-visible chunk size
+with the resident wave-slot count of the GPU,
+$W_{\text{kernel\_sat}} = S_{\text{wave}} \cdot C_{\text{ker}}^{*}$,
+so that each window contains at least one chunk per resident wave
+slot. The PCIe-amortization floor, set to 64\,MiB, ensures that the
+bulk H2D issued per window is large enough to reach the asymptotic
+PCIe Gen4 bandwidth and amortize the per-transfer setup. The
+launch-amortization floor, set to 16\,MiB, ensures that the
+per-window kernel launch and bookkeeping overhead is small relative
+to the per-window kernel time. The values used by the four AMD parts
+in the evaluation are summarized in Table~\ref{tab:three-floors}.
 
-with the per-tile time, under three-stage overlap of memcpy, PCIe,
-and kernel, given by
+\begin{table}[t]
+\centering
+\caption{Three-floor rule applied to the four AMD GPUs evaluated.
+$S_{\text{wave}}$ is the resident wave-slot count;
+$C_{\text{ker}}^{*}$ is the chunk size selected by
+Section~\ref{sec:optim-chunk-size}; the binding floor is shown in
+bold.}
+\label{tab:three-floors}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+GPU (arch) & $S_{\text{wave}}$ & $C_{\text{ker}}^{*}$
+  & $W_{\text{kernel\_sat}}$ & $W_{\text{pcie\_amort}}$
+  & $W_{\text{launch\_amort}}$ & $W_{\text{agg}}^{*}$ \\
+\midrule
+MI50 (gfx906)     &  960 & 16\,KiB & 15\,MiB &
+                    \textbf{64\,MiB} & 16\,MiB & 64\,MiB \\
+MI210 (gfx90a)    & 3328 & 16\,KiB & 52\,MiB &
+                    \textbf{64\,MiB} & 16\,MiB & 64\,MiB \\
+MI300X (gfx942)   & 9728 &  8\,KiB & \textbf{76\,MiB} &
+                    64\,MiB & 16\,MiB & 76\,MiB \\
+RX 7900 XT (gfx1100) & 2688 & 16\,KiB & 42\,MiB &
+                    \textbf{64\,MiB} & 16\,MiB & 64\,MiB \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\[
-T_{\text{tile}}(W) \;=\;
-   \max\!\left(\frac{W}{R_{\text{h2h}}},\;
-               \frac{W}{R_{\text{pcie}}},\;
-               T_k(W)\right).
-\]
+Two observations follow from the table. First, MI300X is the only
+case in which $W_{\text{kernel\_sat}}$ is the binding constraint: its
+large $S_{\text{wave}}$ pushes the kernel-saturation floor above the
+64\,MiB PCIe floor, so the adaptive runtime grows the window to
+76\,MiB to provide one 8\,KiB chunk per resident wave slot. Second,
+on the three smaller AMD parts the PCIe-amortization floor wins, and
+all three converge on a 64\,MiB window. This is a useful property of
+the rule: the same runtime policy adapts to a much smaller wave
+budget without producing a window so small that PCIe setup
+dominates.
 
-Two constraints on $W$ follow from this structure. The window must be
-large enough that the kernel does not stall the pipeline, which gives
-$W \geq W_{\text{kernel-sat}}$ with the same per-arch constant as in
-Section~\ref{sec:chunk-calibration}. The window must also be large
-enough that the PCIe transfer is not dominated by per-transfer setup
-overhead, which gives $W \geq W_{\text{pcie-amort}}$, a constant of
-about $4$\,MiB on every target platform. A third constraint
-follows from the requirement that the allocation cost not eclipse the
-useful work: amortizing $W/R_{\text{alloc}}$ over $L/R_{\text{pcie}}$
-useful PCIe time gives $W \leq L \cdot R_{\text{alloc}} /
-R_{\text{pcie}}$, which is approximately $L/110$. Putting these
-together, the operational window choice is
+\subsection{Adaptive execution and measured impact}
+\label{sec:adaptive-execution}
 
-\[
-W_{\text{opt}}(L) \;=\;
-   \min\!\Big(\frac{L}{110},\;
-              \max\!\big(W_{\text{kernel-sat}},\,
-                         W_{\text{pcie-amort}}\big)\Big),
-\]
+For each window, \arcto{} copies the next portion of the pageable
+input into the pinned aggregation region, transfers the populated
+window to device memory, launches the batched compression kernel over
+the chunks contained in that window, and copies the compressed
+payload and metadata back to the host. The same pinned buffer is
+reused for the next window, so the allocation cost is paid once for
+the lifetime of the adaptive context. This matters because pinned
+allocation is the dominant fixed cost on AMD platforms: a 1\,GiB
+pinned region takes more than 200\,ms to allocate, while a 64\,MiB
+region takes around 15\,ms.
 
-where the upper cap from the amortization condition becomes active
-only on inputs that are too small to accommodate a fully wave-saturated
-window. On the $1$\,GiB to $16$\,GiB inputs that drive the
-present study, the lower bound from the kernel-saturation budget is
-always the binding constraint.
+The behavior on the 1\,GiB TTI workload, RX 7900 XT (gfx1100), is
+summarized in Table~\ref{tab:adaptive-impact}. Adaptive execution
+recovers the H2D/D2H gain of the pinned-full path, matches its
+measured pipeline time, and reduces the pinned-memory footprint from
+the full input size to a single 64\,MiB window. The 1\,GiB input is
+processed in 16 windows. Compared to pageable execution, the
+end-to-end speedup is $2.03\times$ for LZ4, $2.93\times$ for Snappy,
+and $3.38\times$ for Cascaded; compared to the pinned-full path,
+adaptive uses $16\times$ less peak pinned memory at the same total
+time. The pattern extends to larger inputs without changing the
+runtime policy: a 4\,GiB input is processed in 64 windows on the
+same GPU, and the peak pinned footprint stays at 64\,MiB.
 
-\subsection{Online refinement}
-\label{sec:tile-refinement}
+\begin{table}[t]
+\centering
+\caption{Pageable, pinned-full, and adaptive execution on a 1\,GiB
+TTI input on the RX 7900 XT (gfx1100). Total time is the measured
+end-to-end pipeline (compression). Peak pinned is the host pinned
+allocation maintained for the duration of the call.}
+\label{tab:adaptive-impact}
+\small
+\begin{tabular}{llrrrr}
+\toprule
+Algorithm & Mode & H2D & D2H & Total & Peak pinned \\
+          &      & (ms) & (ms) & (ms) & (MiB) \\
+\midrule
+LZ4      & pageable     & 155.0 & 149.8 & 447.3 & 0 \\
+         & pinned full  &  39.9 &  38.6 & 220.3 & 1024 \\
+         & adaptive     &  39.8 &  38.5 & 220.2 & 64 \\
+\midrule
+Snappy   & pageable     & 155.2 & 150.5 & 346.3 & 0 \\
+         & pinned full  &  39.6 &  38.4 & 118.4 & 1024 \\
+         & adaptive     &  39.3 &  38.1 & 118.1 & 64 \\
+\midrule
+Cascaded & pageable     & 155.0 & 151.7 & 324.2 & 0 \\
+         & pinned full  &  39.7 &  38.9 &  96.1 & 1024 \\
+         & adaptive     &  39.4 &  38.6 &  95.4 & 64 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-The cost-model constants used to seed $W_{\text{opt}}$ are device
-properties (allocation throughput, PCIe bandwidth, kernel saturation
-budget) that are stable within a given host-device pair but vary by
-roughly $\pm 15\,\%$ across runs because of host load, PCIe topology,
-and thermal throttling. \arcto{} therefore refines the cost-model
-constants online during the tiled execution itself, using a single
-exponential moving average per phase:
-
-\[
-\hat{R}_{\phi}^{(t+1)} \;=\;
-   (1 - \alpha)\,\hat{R}_{\phi}^{(t)}
-   \;+\; \alpha \cdot \frac{W^{(t)}}{T_{\phi}^{(t)}},
-\]
-
-with $\phi \in \{\text{h2h},\text{pcie},\text{kernel}\}$ and a smoothing
-factor $\alpha = 0.3$ that gives the EMA a half-life of roughly two
-tiles. After every fourth tile, $W$ is recomputed from the updated
-constants and capped to remain within a factor of $\sqrt{2}$ of its
-previous value, which prevents the loop from oscillating on a single
-noisy measurement. The first four tiles use the model-seeded $W$
-unchanged, so the refinement loop never starves the pipeline of work
-to measure.
-
-The full refinement loop adds at most a few microseconds per tile and
-is performed on the host side outside the GPU critical path. It is
-the only piece of the optimization that depends on the workload
-characteristics; the cost-model seeds are static per-arch constants.
-
-\subsection{Exposure in the \arcto{} API}
-\label{sec:tile-api}
-
-The adaptive variant lives behind a new public entry point that
-mirrors the existing batched signature with two additional
-parameters: an opaque adaptive-context handle and an optional
-statistics-output pointer. A typical call sequence is:
-
-\begin{lstlisting}[basicstyle=\ttfamily\small,frame=single,xleftmargin=1em]
-arctoAdaptiveContext_t ctx;
-arctoHostBatchAdaptiveCreate(&ctx, device_id);
-
-arctoHostBatchAdaptiveLZ4(
-   ctx, host_input, input_size, ...);
-
-arctoAdaptiveStats_t stats;
-arctoHostBatchAdaptiveGetStats(ctx, &stats);
-arctoHostBatchAdaptiveDestroy(ctx);
-\end{lstlisting}
-
-The context object owns the pinned window, the EMA state, and the
-per-arch cost-model seeds. The same context can be reused across
-many calls and across different algorithms (LZ4, Snappy, Cascaded),
-which lets a long-running scientific simulation amortize the pinned
-allocation across the whole simulation rather than per snapshot.
-The single-shot \texttt{arctoHostBatch} variant is preserved for
-applications that need the simpler signature or that already manage
-their own pinned staging area.
-
-The internal implementation lives in
-\texttt{src/lowlevel/HostBatchAdaptive.cpp} and is approximately
-$240$ source lines, of which the cost-model evaluation and the EMA
-refinement loop together account for fewer than $60$ lines. No
-changes to the algorithmic kernels are required; the kernels see the
-same per-tile chunked workload they would see under any other
-window-sizing scheme.
-
-\subsection{Measured impact}
-\label{sec:tile-impact}
-
-The adaptive tiled variant gives an end-to-end speedup of $1.32\times$
-to $2.26\times$ over the pageable-source baseline on gfx942 across
-the $1$\,GiB to $16$\,GiB sweep. The largest observed gain,
-$2.26\times$ on the $16$\,GiB Cascaded workload, comes from the
-combination of a fully wave-saturated kernel (Section~\ref{sec:optim-chunk-size}),
-a single small pinned allocation that the EMA refinement quickly
-right-sizes around $80$\,MiB, and three-stage overlap of memcpy,
-PCIe, and kernel. The behaviour generalizes qualitatively across the
-four architectures: every platform sees a positive speedup at every
-input size at or above $1$\,GiB. The two optimizations compose
-additively rather than multiplicatively, which is the expected
-behaviour given that Section~\ref{sec:optim-chunk-size} reclaims
-kernel time and the present section reclaims transfer-pipeline
-time. Section~\ref{sec:evaluation} reports the full matrix and breaks
-down the contribution of each phase across the four target
-architectures.
+The adaptive path is exposed to applications through a small context
+API. The context object owns the pinned window, the runtime
+counters, and the iteration state, and is reused across many
+compression calls; this is the common case in scientific workflows
+that compress successive checkpoints, timesteps, or partitions of a
+larger dataset. The same context emits the per-call statistics used
+in the evaluation: kernel chunk size, aggregation window size,
+number of windows, peak pinned bytes, allocation time,
+host-to-host copy time, H2D and D2H times, kernel time, and total
+time. Reporting this full breakdown is what makes the comparison in
+Table~\ref{tab:adaptive-impact} honest: omitting allocation and
+host-to-host staging, as a kernel-only or transfer-only view would,
+hides exactly the cost that the adaptive path eliminates.

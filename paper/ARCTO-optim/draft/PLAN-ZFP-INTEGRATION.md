@@ -19,6 +19,24 @@
 > **Open from the original plan:**
 > - Reference audit of Sec.~4 / Sec.~5 (claims table at the end of
 >   this file). Not yet applied.
+>
+> **Tolerance set revised (2026-05-25):** ZFP fixed-accuracy sweep now
+> covers six points {1e-3, 1e-4, 1e-5, 1e-6, 1e-9, 1e-12} instead of
+> the original four. Rationale derived from a fact-check of the two
+> seismic-RTM references:
+> - **Barbosa & Coutinho 2023 (SBAC-PAD)** tested tau = 1e-4 and 1e-6
+>   on Marmousi: 1e-6 preserves the migrated image, 1e-4 damages it.
+>   Their range is the application-level anchor for our 1e-3..1e-6
+>   points and replaces Lindstrom 2016 as the primary citation for
+>   the RTM image-preservation claim in Sec.~3.3.
+> - **Lindstrom et al. 2016 (F3DT)** tested tau = 2^-40 .. 2^-50
+>   (approx 1e-13 .. 1e-16) on sensitivity kernels: kernel error
+>   << noise floor in misfit measurements. We approach this envelope
+>   with 1e-9 and 1e-12 points to show continuous trade-off.
+> - **Mitterrutzner et al. 2026 (Celerity API)** only references ZFP
+>   in passing among GPU compression options; its own evaluation uses
+>   quantization, not ZFP. Stays in related work as an API-level
+>   reference, not as accuracy-validation support.
 
 ---
 
