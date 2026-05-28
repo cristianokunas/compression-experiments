@@ -1,0 +1,198 @@
+detected arch=gfx1100, using MAX_GB_FOR_GPU=4
+=== Stage 3: sweep -> /ssd/cakunas/compression-experiments/paper/ARCTO-optim/results/lunaris_FULL_20260525_011052 ===
+will run 188 benchmark invocations
+[  1/188 01:11:11] tti      10mb  lz4             baseline 
+[  2/188 01:11:13] tti      10mb  lz4             pinned   
+[  3/188 01:11:14] tti      10mb  lz4             adaptive 
+[  4/188 01:11:15] tti      10mb  snappy          baseline 
+[  5/188 01:11:16] tti      10mb  snappy          pinned   
+[  6/188 01:11:17] tti      10mb  snappy          adaptive 
+[  7/188 01:11:18] tti      10mb  cascaded        baseline 
+[  8/188 01:11:19] tti      10mb  cascaded        pinned   
+[  9/188 01:11:20] tti      10mb  cascaded        adaptive 
+[ 10/188 01:11:21] zeros    10mb  lz4             baseline 
+[ 11/188 01:11:22] zeros    10mb  lz4             pinned   
+[ 12/188 01:11:23] zeros    10mb  lz4             adaptive 
+[ 13/188 01:11:24] zeros    10mb  snappy          baseline 
+[ 14/188 01:11:25] zeros    10mb  snappy          pinned   
+[ 15/188 01:11:26] zeros    10mb  snappy          adaptive 
+[ 16/188 01:11:27] zeros    10mb  cascaded        baseline 
+[ 17/188 01:11:28] zeros    10mb  cascaded        pinned   
+[ 18/188 01:11:28] zeros    10mb  cascaded        adaptive 
+[ 19/188 01:11:29] random   10mb  lz4             baseline 
+[ 20/188 01:11:31] random   10mb  lz4             pinned   
+[ 21/188 01:11:32] random   10mb  lz4             adaptive 
+[ 22/188 01:11:33] random   10mb  snappy          baseline 
+[ 23/188 01:11:34] random   10mb  snappy          pinned   
+[ 24/188 01:11:35] random   10mb  snappy          adaptive 
+[ 25/188 01:11:36] random   10mb  cascaded        baseline 
+[ 26/188 01:11:36] random   10mb  cascaded        pinned   
+[ 27/188 01:11:37] random   10mb  cascaded        adaptive 
+[ 28/188 01:11:38] binary   10mb  lz4             baseline 
+[ 29/188 01:11:39] binary   10mb  lz4             pinned   
+[ 30/188 01:11:40] binary   10mb  lz4             adaptive 
+[ 31/188 01:11:41] binary   10mb  snappy          baseline 
+[ 32/188 01:11:42] binary   10mb  snappy          pinned   
+[ 33/188 01:11:43] binary   10mb  snappy          adaptive 
+[ 34/188 01:11:44] binary   10mb  cascaded        baseline 
+[ 35/188 01:11:45] binary   10mb  cascaded        pinned   
+[ 36/188 01:11:46] binary   10mb  cascaded        adaptive 
+[ 37/188 01:11:47] tti      100mb lz4             baseline 
+[ 38/188 01:11:49] tti      100mb lz4             pinned   
+[ 39/188 01:11:51] tti      100mb lz4             adaptive 
+[ 40/188 01:11:54] tti      100mb snappy          baseline 
+[ 41/188 01:11:55] tti      100mb snappy          pinned   
+[ 42/188 01:11:57] tti      100mb snappy          adaptive 
+[ 43/188 01:11:59] tti      100mb cascaded        baseline 
+[ 44/188 01:12:00] tti      100mb cascaded        pinned   
+[ 45/188 01:12:02] tti      100mb cascaded        adaptive 
+[ 46/188 01:12:04] zeros    100mb lz4             baseline 
+[ 47/188 01:12:05] zeros    100mb lz4             pinned   
+[ 48/188 01:12:07] zeros    100mb lz4             adaptive 
+[ 49/188 01:12:09] zeros    100mb snappy          baseline 
+[ 50/188 01:12:10] zeros    100mb snappy          pinned   
+[ 51/188 01:12:12] zeros    100mb snappy          adaptive 
+[ 52/188 01:12:14] zeros    100mb cascaded        baseline 
+[ 53/188 01:12:16] zeros    100mb cascaded        pinned   
+[ 54/188 01:12:17] zeros    100mb cascaded        adaptive 
+[ 55/188 01:12:19] random   100mb lz4             baseline 
+[ 56/188 01:12:21] random   100mb lz4             pinned   
+[ 57/188 01:12:23] random   100mb lz4             adaptive 
+[ 58/188 01:12:26] random   100mb snappy          baseline 
+[ 59/188 01:12:27] random   100mb snappy          pinned   
+[ 60/188 01:12:29] random   100mb snappy          adaptive 
+[ 61/188 01:12:31] random   100mb cascaded        baseline 
+[ 62/188 01:12:32] random   100mb cascaded        pinned   
+[ 63/188 01:12:34] random   100mb cascaded        adaptive 
+[ 64/188 01:12:36] binary   100mb lz4             baseline 
+[ 65/188 01:12:38] binary   100mb lz4             pinned   
+[ 66/188 01:12:39] binary   100mb lz4             adaptive 
+[ 67/188 01:12:41] binary   100mb snappy          baseline 
+[ 68/188 01:12:43] binary   100mb snappy          pinned   
+[ 69/188 01:12:45] binary   100mb snappy          adaptive 
+[ 70/188 01:12:47] binary   100mb cascaded        baseline 
+[ 71/188 01:12:48] binary   100mb cascaded        pinned   
+[ 72/188 01:12:50] binary   100mb cascaded        adaptive 
+[ 73/188 01:12:51] tti      1gb   lz4             baseline 
+[ 74/188 01:13:05] tti      1gb   lz4             pinned   
+[ 75/188 01:13:20] tti      1gb   lz4             adaptive 
+[ 76/188 01:13:35] tti      1gb   snappy          baseline 
+[ 77/188 01:13:45] tti      1gb   snappy          pinned   
+[ 78/188 01:13:56] tti      1gb   snappy          adaptive 
+[ 79/188 01:14:07] tti      1gb   cascaded        baseline 
+[ 80/188 01:14:16] tti      1gb   cascaded        pinned   
+[ 81/188 01:14:26] tti      1gb   cascaded        adaptive 
+[ 82/188 01:14:36] zeros    1gb   lz4             baseline 
+[ 83/188 01:14:45] zeros    1gb   lz4             pinned   
+[ 84/188 01:14:55] zeros    1gb   lz4             adaptive 
+[ 85/188 01:15:05] zeros    1gb   snappy          baseline 
+[ 86/188 01:15:15] zeros    1gb   snappy          pinned   
+[ 87/188 01:15:26] zeros    1gb   snappy          adaptive 
+[ 88/188 01:15:37] zeros    1gb   cascaded        baseline 
+[ 89/188 01:15:46] zeros    1gb   cascaded        pinned   
+[ 90/188 01:15:56] zeros    1gb   cascaded        adaptive 
+[ 91/188 01:16:06] random   1gb   lz4             baseline 
+[ 92/188 01:16:20] random   1gb   lz4             pinned   
+[ 93/188 01:16:35] random   1gb   lz4             adaptive 
+[ 94/188 01:16:50] random   1gb   snappy          baseline 
+[ 95/188 01:17:00] random   1gb   snappy          pinned   
+[ 96/188 01:17:11] random   1gb   snappy          adaptive 
+[ 97/188 01:17:22] random   1gb   cascaded        baseline 
+[ 98/188 01:17:31] random   1gb   cascaded        pinned   
+[ 99/188 01:17:41] random   1gb   cascaded        adaptive 
+[100/188 01:17:51] binary   1gb   lz4             baseline 
+[101/188 01:18:01] binary   1gb   lz4             pinned   
+[102/188 01:18:12] binary   1gb   lz4             adaptive 
+[103/188 01:18:23] binary   1gb   snappy          baseline 
+[104/188 01:18:33] binary   1gb   snappy          pinned   
+[105/188 01:18:44] binary   1gb   snappy          adaptive 
+[106/188 01:18:55] binary   1gb   cascaded        baseline 
+[107/188 01:19:05] binary   1gb   cascaded        pinned   
+[108/188 01:19:14] binary   1gb   cascaded        adaptive 
+[109/188 01:19:25] tti      4gb   lz4             baseline 
+[110/188 01:20:18] tti      4gb   lz4             pinned   
+[111/188 01:21:14] tti      4gb   lz4             adaptive 
+[112/188 01:22:11] tti      4gb   snappy          baseline 
+[113/188 01:22:50] tti      4gb   snappy          pinned   
+[114/188 01:23:30] tti      4gb   snappy          adaptive 
+[115/188 01:24:13] tti      4gb   cascaded        baseline 
+[116/188 01:24:48] tti      4gb   cascaded        pinned   
+[117/188 01:25:25] tti      4gb   cascaded        adaptive 
+[118/188 01:26:03] zeros    4gb   lz4             baseline 
+[119/188 01:26:36] zeros    4gb   lz4             pinned   
+[120/188 01:27:12] zeros    4gb   lz4             adaptive 
+[121/188 01:27:49] zeros    4gb   snappy          baseline 
+[122/188 01:28:28] zeros    4gb   snappy          pinned   
+[123/188 01:29:09] zeros    4gb   snappy          adaptive 
+[124/188 01:29:51] zeros    4gb   cascaded        baseline 
+[125/188 01:30:26] zeros    4gb   cascaded        pinned   
+[126/188 01:31:03] zeros    4gb   cascaded        adaptive 
+[127/188 01:31:41] random   4gb   lz4             baseline 
+[128/188 01:32:35] random   4gb   lz4             pinned   
+[129/188 01:33:32] random   4gb   lz4             adaptive 
+[130/188 01:34:29] random   4gb   snappy          baseline 
+[131/188 01:35:08] random   4gb   snappy          pinned   
+[132/188 01:35:48] random   4gb   snappy          adaptive 
+[133/188 01:36:31] random   4gb   cascaded        baseline 
+[134/188 01:37:05] random   4gb   cascaded        pinned   
+[135/188 01:37:42] random   4gb   cascaded        adaptive 
+[136/188 01:38:20] binary   4gb   lz4             baseline 
+[137/188 01:38:58] binary   4gb   lz4             pinned   
+[138/188 01:39:38] binary   4gb   lz4             adaptive 
+[139/188 01:40:20] binary   4gb   snappy          baseline 
+[140/188 01:40:59] binary   4gb   snappy          pinned   
+[141/188 01:41:40] binary   4gb   snappy          adaptive 
+[142/188 01:42:22] binary   4gb   cascaded        baseline 
+[143/188 01:42:56] binary   4gb   cascaded        pinned   
+[144/188 01:43:33] binary   4gb   cascaded        adaptive 
+[skip] all 8gb runs exceed MAX_GB_FOR_GPU=4
+[skip] all 16gb runs exceed MAX_GB_FOR_GPU=4
+[145/188 01:44:11] tti      10mb  zfp/fixed_accuracy=1e-3
+[146/188 01:44:12] tti      10mb  zfp/fixed_accuracy=1e-4
+[147/188 01:44:13] tti      10mb  zfp/fixed_accuracy=1e-5
+[148/188 01:44:14] tti      10mb  zfp/fixed_accuracy=1e-6
+[149/188 01:44:15] tti      10mb  zfp/fixed_rate=4    
+[150/188 01:44:16] tti      10mb  zfp/fixed_rate=8    
+[151/188 01:44:17] tti      10mb  zfp/fixed_rate=16   
+[152/188 01:44:18] tti      10mb  zfp/fixed_rate=24   
+[153/188 01:44:18] tti      10mb  zfp/fixed_precision=8
+[154/188 01:44:19] tti      10mb  zfp/fixed_precision=16
+[155/188 01:44:20] tti      10mb  zfp/fixed_precision=24
+[156/188 01:44:21] tti      100mb zfp/fixed_accuracy=1e-3
+[157/188 01:44:22] tti      100mb zfp/fixed_accuracy=1e-4
+[158/188 01:44:24] tti      100mb zfp/fixed_accuracy=1e-5
+[159/188 01:44:25] tti      100mb zfp/fixed_accuracy=1e-6
+[160/188 01:44:27] tti      100mb zfp/fixed_rate=4    
+[161/188 01:44:28] tti      100mb zfp/fixed_rate=8    
+[162/188 01:44:29] tti      100mb zfp/fixed_rate=16   
+[163/188 01:44:30] tti      100mb zfp/fixed_rate=24   
+[164/188 01:44:32] tti      100mb zfp/fixed_precision=8
+[165/188 01:44:33] tti      100mb zfp/fixed_precision=16
+[166/188 01:44:34] tti      100mb zfp/fixed_precision=24
+[167/188 01:44:36] tti      1gb   zfp/fixed_accuracy=1e-3
+[168/188 01:44:41] tti      1gb   zfp/fixed_accuracy=1e-4
+[169/188 01:44:47] tti      1gb   zfp/fixed_accuracy=1e-5
+[170/188 01:44:53] tti      1gb   zfp/fixed_accuracy=1e-6
+[171/188 01:45:00] tti      1gb   zfp/fixed_rate=4    
+[172/188 01:45:03] tti      1gb   zfp/fixed_rate=8    
+[173/188 01:45:07] tti      1gb   zfp/fixed_rate=16   
+[174/188 01:45:13] tti      1gb   zfp/fixed_rate=24   
+[175/188 01:45:20] tti      1gb   zfp/fixed_precision=8
+[176/188 01:45:25] tti      1gb   zfp/fixed_precision=16
+[177/188 01:45:31] tti      1gb   zfp/fixed_precision=24
+[178/188 01:45:38] tti      4gb   zfp/fixed_accuracy=1e-3
+[179/188 01:45:56] tti      4gb   zfp/fixed_accuracy=1e-4
+[180/188 01:46:16] tti      4gb   zfp/fixed_accuracy=1e-5
+[181/188 01:46:37] tti      4gb   zfp/fixed_accuracy=1e-6
+[182/188 01:47:01] tti      4gb   zfp/fixed_rate=4    
+[183/188 01:47:12] tti      4gb   zfp/fixed_rate=8    
+[184/188 01:47:25] tti      4gb   zfp/fixed_rate=16   
+[185/188 01:47:45] tti      4gb   zfp/fixed_rate=24   
+[186/188 01:48:10] tti      4gb   zfp/fixed_precision=8
+[187/188 01:48:24] tti      4gb   zfp/fixed_precision=16
+[188/188 01:48:45] tti      4gb   zfp/fixed_precision=24
+
+=== sweep done. CSVs: 188 ===
+
+to keep the home quota free, optionally remove the scratch:
+  rm -rf /ssd/cakunas/testdata/canonical
