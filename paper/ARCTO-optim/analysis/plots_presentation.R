@@ -283,9 +283,9 @@ fig3_zfp <- function(df) {
       # (acc1e-6 -> acc1e6), so the persisted ZfpParam for fixed-accuracy
       # is "1eN" but actually denotes tau = 1e-N. Restore the sign here.
       ParamLabel = case_when(
-        Mode == "acc"  ~ paste0("tau=", str_replace(ZfpParam, "e", "e-")),
-        Mode == "rate" ~ paste0(ZfpParam, " bpv"),
-        Mode == "prec" ~ paste0("p=", ZfpParam),
+        Mode == "acc"  ~ paste0("acc=",  str_replace(ZfpParam, "e", "e-")),
+        Mode == "rate" ~ paste0("rate=", ZfpParam),
+        Mode == "prec" ~ paste0("prec=", ZfpParam),
         TRUE           ~ as.character(ZfpParam)
       )
     )
