@@ -1,0 +1,197 @@
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/DeltaGPU.hip	2026-03-10 11:00:37.394707864 -0300
++++ /ssd/cakunas/devel/hipCOMP-core/src/DeltaGPU.h	2026-03-10 10:54:28.245137508 -0300
+@@ -1,4 +1,3 @@
+-#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -26,127 +25,67 @@
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
++// MIT License
++//
++// Modifications Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights
++// reserved.
++//
++// Permission is hereby granted, free of charge, to any person obtaining a copy
++// of this software and associated documentation files (the "Software"), to deal
++// in the Software without restriction, including without limitation the rights
++// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++// copies of the Software, and to permit persons to whom the Software is
++// furnished to do so, subject to the following conditions:
++//
++// The above copyright notice and this permission notice shall be included in
++// all copies or substantial portions of the Software.
++//
++// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++// SOFTWARE.
++
++#pragma once
++
++#include "hip/hip_runtime.h"
++#include "hipcomp.h"
++
++#include <cstddef>
++
++namespace hipcomp {
+ 
+-#include "DeltaGPU.h"
+-#include "common.h"
+-#include "type_macros.h"
+-
+-#include <cassert>
+-#include <limits>
+-
+-namespace nvcomp
+-{
+-
+-/******************************************************************************
+- * CONSTANTS ******************************************************************
+- *****************************************************************************/
+-
+-namespace
+-{
+-
+-constexpr int const BLOCK_SIZE = 1024;
+-
+-} // namespace
+-
+-/******************************************************************************
+- * KERNELS ********************************************************************
+- *****************************************************************************/
+-
+-namespace
+-{
+-
+-template <typename VALUE>
+-__global__ void deltaKernel(
+-    VALUE** const outputPtr,
+-    const VALUE* const input,
+-    const size_t* const numDevice,
+-    const size_t /* maxNum */)
+-{
+-  const size_t num = *numDevice;
+-
+-  if (BLOCK_SIZE * blockIdx.x < num) {
+-    VALUE* const output = *outputPtr;
+-
+-    const int idx = threadIdx.x + BLOCK_SIZE * blockIdx.x;
+-
+-    __shared__ VALUE buffer[BLOCK_SIZE + 1];
+-
+-    if (idx < num) {
+-      buffer[threadIdx.x + 1] = input[idx];
+-    }
+-
+-    if (threadIdx.x == 0) {
+-      // first thread must do something special
+-      if (idx > 0) {
+-        buffer[0] = input[idx - 1];
+-      } else {
+-        buffer[0] = 0;
+-      }
+-    }
+-
+-    __syncthreads();
+-
+-    if (idx < num) {
+-      output[idx] = buffer[threadIdx.x + 1] - buffer[threadIdx.x];
+-    }
+-  }
+-}
+-
+-} // namespace
+-
+-/******************************************************************************
+- * HELPER FUNCTIONS ***********************************************************
+- *****************************************************************************/
+-
+-namespace
+-{
+-
+-template <typename VALUE>
+-void deltaLaunch(
+-    void** const outPtr,
+-    void const* const in,
+-    const size_t* const numDevice,
+-    const size_t maxNum,
+-    hipStream_t stream)
+-{
+-  VALUE** const outTypedPtr = reinterpret_cast<VALUE**>(outPtr);
+-  const VALUE* const inTyped = static_cast<const VALUE*>(in);
+-
+-  const dim3 block(BLOCK_SIZE);
+-  const dim3 grid(roundUpDiv(maxNum, BLOCK_SIZE));
+-  deltaKernel<<<grid, block, 0, stream>>>(
+-      outTypedPtr, inTyped, numDevice, maxNum);
+-  hipError_t err = hipGetLastError();
+-  if (err != hipSuccess) {
+-    throw std::runtime_error(
+-        "Failed to launch deltaKernel kernel: " + std::to_string(err));
+-  }
+-}
+-
+-} // namespace
+-
+-/******************************************************************************
+- * PUBLIC STATIC METHODS ******************************************************
+- *****************************************************************************/
+-
+-void DeltaGPU::compress(
+-    void* const /* workspace */,
+-    const size_t /* workspaceSize*/,
+-    const nvcompType_t inType,
+-    void** const outPtr,
+-    const void* const in,
+-    const size_t* const numDevice,
+-    const size_t maxNum,
+-    hipStream_t stream)
+-{
+-  NVCOMP_TYPE_ONE_SWITCH(
+-      inType, deltaLaunch, outPtr, in, numDevice, maxNum, stream);
+-}
+-
+-size_t DeltaGPU::requiredWorkspaceSize(
+-    const size_t /*num*/, const nvcompType_t /* type */)
+-{
+-  return 0;
+-}
++class DeltaGPU {
++public:
++  /**
++   * @brief Encode a series of values using delta encoding. That is for the
++   * series [a, b, c, ..., z], store [a, b-a, b-c, ..., z-y].
++   *
++   * @param workspace The temporary workspace to use.
++   * @param workspaceSize The size of the temporary workspace to use.
++   * @param valueType The type of value to delta encode.
++   * @param outValuesPtr The location to write output stored on the device.
++   * @param inValues The input location.
++   * @param numDevice The actual number of values on the device.
++   * @param maxNum The maximum number of values.
++   * @param stream The stream to operate on.
++   */
++  static void compress(void *workspace, size_t workspaceSize,
++                       hipcompType_t valueType, void **const outValuesPtr,
++                       const void *inValues, const size_t *numDevice,
++                       const size_t maxNum, hipStream_t stream);
++
++  /**
++   * @brief Get the required size of the workspace in bytes.
++   *
++   * @param num The number of elements to compress.
++   * @param type The type of elements.
++   *
++   * @return The size in bytes of the required workspace.
++   */
++  static size_t requiredWorkspaceSize(size_t num, hipcompType_t type);
++};
+ 
+-} // namespace nvcomp
++} // namespace hipcomp

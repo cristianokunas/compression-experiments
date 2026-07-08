@@ -1,0 +1,91 @@
+--- /ssd/cakunas/devel/hipCOMP-core/src/TempSpaceBroker.h	2026-03-10 10:54:28.249137524 -0300
++++ /ssd/cakunas/hip-compression-toolkit/src/TempSpaceBroker.h	2026-01-27 16:32:31.231250637 -0300
+@@ -27,8 +27,7 @@
+  */
+ // MIT License
+ //
+-// Modifications Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights
+-// reserved.
++// Modifications Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
+ //
+ // Permission is hereby granted, free of charge, to any person obtaining a copy
+ // of this software and associated documentation files (the "Software"), to deal
+@@ -37,8 +36,8 @@
+ // copies of the Software, and to permit persons to whom the Software is
+ // furnished to do so, subject to the following conditions:
+ //
+-// The above copyright notice and this permission notice shall be included in
+-// all copies or substantial portions of the Software.
++// The above copyright notice and this permission notice shall be included in all
++// copies or substantial portions of the Software.
+ //
+ // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+@@ -48,13 +47,16 @@
+ // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ // SOFTWARE.
+ 
+-#pragma once
++#ifndef TEMPSPACEBROKER_H
++#define TEMPSPACEBROKER_H
+ 
+ #include <cstddef>
+ 
+-namespace hipcomp {
++namespace hipcomp
++{
+ 
+-class TempSpaceBroker {
++class TempSpaceBroker
++{
+ public:
+   /**
+    * @brief Create a new temp space broker.
+@@ -62,7 +64,7 @@
+    * @param space The start of the region of memory to use.
+    * @param bytes The size of the region of memory.
+    */
+-  TempSpaceBroker(void *space, size_t bytes);
++  TempSpaceBroker(void* space, size_t bytes);
+ 
+   /**
+    * @brief Reserve a chunk of temp space.
+@@ -73,11 +75,14 @@
+    *
+    * @throws An exception if there is no more space left.
+    */
+-  template <typename T> void reserve(T **ptr, const size_t num) {
+-    *ptr = reinterpret_cast<T *>(reserve(alignof(T), num, sizeof(T)));
++  template <typename T>
++  void reserve(T** ptr, const size_t num)
++  {
++    *ptr = reinterpret_cast<T*>(reserve(alignof(T), num, sizeof(T)));
+   }
+ 
+-  void reserve(void **ptr, const size_t num) {
++  void reserve(void** ptr, const size_t num)
++  {
+     // Make sure we still align to 8 bytes
+     *ptr = reserve(alignof(size_t), num, 1);
+   }
+@@ -98,14 +103,16 @@
+    *
+    * @return The next available space.
+    */
+-  void *next() const;
++  void* next() const;
+ 
+ private:
+-  void *m_base;
++  void* m_base;
+   size_t m_size;
+   size_t m_offset;
+ 
+-  void *reserve(const size_t alignment, const size_t num, const size_t size);
++  void* reserve(const size_t alignment, const size_t num, const size_t size);
+ };
+ 
+ } // namespace hipcomp
++
++#endif
+\ No newline at end of file

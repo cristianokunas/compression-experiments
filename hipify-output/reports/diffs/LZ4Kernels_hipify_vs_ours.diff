@@ -1,0 +1,416 @@
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/LZ4Kernels.hiph	2026-03-10 11:01:47.491005761 -0300
++++ /ssd/cakunas/hip-compression-toolkit/src/LZ4Kernels.hiph	2026-01-27 16:32:31.231250637 -0300
+@@ -1,4 +1,3 @@
+-#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -26,14 +25,36 @@
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
++// MIT License
++//
++// Modifications Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
++//
++// Permission is hereby granted, free of charge, to any person obtaining a copy
++// of this software and associated documentation files (the "Software"), to deal
++// in the Software without restriction, including without limitation the rights
++// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++// copies of the Software, and to permit persons to whom the Software is
++// furnished to do so, subject to the following conditions:
++//
++// The above copyright notice and this permission notice shall be included in all
++// copies or substantial portions of the Software.
++//
++// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++// SOFTWARE.
++
+ #pragma once
+ 
+-#include "CudaUtils.h"
++#include "HipUtils.h"
+ #include "TempSpaceBroker.h"
+ #include "common.h"
+ 
+ #include "hip/hip_runtime.h"
+-#include "nvcomp_cub.cuh"
++#include "hipcomp_hipcub.hiph"
+ #include "LZ4Types.h"
+ 
+ #include <cassert>
+@@ -41,6 +62,50 @@
+ #include <iostream>
+ #include <vector>
+ 
++#if !defined(USE_WARPSIZE_64) && !defined(USE_WARPSIZE_32)
++# if defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)
++#   define USE_WARPSIZE_64
++#  endif
++#endif
++
++#if (__CUDACC_VER_MAJOR__ >= 9)
++#  define SHFL10(v)        __shfl_sync(~0, v, 0)
++#  define SHFL1(v, t)      __shfl_sync(~0, v, t)
++#  define SHFL1_DOWN(v, m)  __shfl_down_sync(~0, v, m)
++#  define SYNCWARP1()      __syncwarp()
++#  define SYNCWARP(m)      __syncwarp(m)
++#  define BALLOT1(v)       __ballot_sync(~0, v)
++#else
++#  define SHFL10(v)        __shfl(v, 0)
++#  define SHFL1(v, t)      __shfl(v, t)
++#  define SHFL1_DOWN(v, m)  __shfl_down(v, m)
++#  define SYNCWARP1()
++#  define SYNCWARP(m)
++#  define BALLOT1(v)       __ballot(v)
++#endif
++
++#if (defined(__HIP_PLATFORM_AMD__) || defined(__HIP_PLATFORM_HCC__)) && defined (ENABLE_HIP_OPT_WARPSIZE64) && defined(USE_WARPSIZE_64)
++typedef uint64_t lane_mask_t;
++typedef int64_t signed_lane_mask_t;
++constexpr lane_mask_t LANE_MASK_FULL = ~0ULL;
++constexpr int32_t warpsize = 64;
++constexpr uint32_t uwarpsize = 64U;
++#define BREV(x) __brevll(x)
++#define CLZ(x) __clzll(x)
++#else
++typedef uint32_t lane_mask_t;
++typedef int32_t signed_lane_mask_t;
++constexpr lane_mask_t LANE_MASK_FULL = ~0U;
++constexpr int32_t warpsize = 32;
++constexpr uint32_t uwarpsize = 32U;
++#define BREV(x) __brev(x)
++#define CLZ(x) __clz(x)
++#endif
++
++constexpr lane_mask_t LANE_MASK_ZERO = 0;
++constexpr lane_mask_t LANE_MASK_ONE = 1;
++constexpr lane_mask_t LANE_MASK_TWO = 2;
++
+ namespace {
+   // Detail type helpers -- used to reference 4 / 8-byte values
+   using word_type = uint32_t;
+@@ -50,12 +115,12 @@
+ /**
+  * @brief The number of threads to use per chunk in compression.
+  */
+-const int LZ4_COMP_THREADS_PER_CHUNK = 32;
++const int LZ4_COMP_THREADS_PER_CHUNK = warpsize;
+ 
+ /**
+  * @brief The number of threads to use per chunk in decompression.
+  */
+-const int LZ4_DECOMP_THREADS_PER_CHUNK = 32;
++const int LZ4_DECOMP_THREADS_PER_CHUNK = warpsize;
+ 
+ /**
+  * @brief The number of chunks to decompression concurrently per threadblock.
+@@ -64,8 +129,7 @@
+ 
+ #define OOB_CHECKING 1 // Prevent's crashing of corrupt lz4 sequences
+ 
+-namespace nvcomp
+-{
++namespace hipcomp {
+ 
+ /**
+  * @brief The size of the shared memory buffer to use per decompression stream.
+@@ -139,41 +203,41 @@
+ 
+ inline __device__ void syncCTA()
+ {
+-  if (LZ4_DECOMP_THREADS_PER_CHUNK > 32) {
++  if (LZ4_DECOMP_THREADS_PER_CHUNK > warpsize) {
+     __syncthreads();
+   } else {
+-    __syncwarp();
++    SYNCWARP1();
+   }
+ }
+ 
+-inline __device__ int warpBallot(int vote)
++inline __device__ lane_mask_t warpBallot(int vote)
+ {
+-  return __ballot_sync(0xffffffff, vote);
++  return BALLOT1(vote);
+ }
+ 
+ template <typename T>
+-inline __device__ int warpMatchAny(const int participants, T val)
++inline __device__ signed_lane_mask_t warpMatchAny(const signed_lane_mask_t participants, T val)
+ {
+ #if __CUDA_ARCH__ >= 700
+   return __match_any_sync(participants, val);
+ #else
+-  int mask = 0;
++  signed_lane_mask_t mask = 0;
+ 
+   // full search
+-  __shared__ T values[32];
+-  assert(blockDim.x == 32);
++  __shared__ T values[warpsize];
++  assert(blockDim.x == warpsize);
+   assert(blockDim.y == 1);
+-  if ((1 << threadIdx.x) & participants) {
++  if ((LANE_MASK_ONE << threadIdx.x) & participants) {
+     values[threadIdx.x] = val;
+-    __syncwarp(participants);
+-    for (int d = 0; d < 32; ++d) {
+-      const int nbr_id = (threadIdx.x + d) & 31;
+-      if ((1 << nbr_id) & participants) {
++    SYNCWARP(participants);
++    for (int d = 0; d < warpsize; ++d) {
++      const int nbr_id = (threadIdx.x + d) & (uwarpsize-1);
++      if ((LANE_MASK_ONE << nbr_id) & participants) {
+         const T nbr_val = values[nbr_id];
+-        mask |= (val == nbr_val) << nbr_id;
++        mask |= static_cast<lane_mask_t>(val == nbr_val) << nbr_id;
+       }
+     }
+-    __syncwarp(participants);
++    SYNCWARP(participants);
+   }
+ 
+   return mask;
+@@ -306,10 +370,10 @@
+       // most likely case
+       const uint8_t byte = rawAt(idx)[threadIdx.x];
+ 
+-      uint32_t mask = warpBallot(byte != 0xff);
+-      mask = __brev(mask);
++      lane_mask_t mask = warpBallot(byte != 0xff);
++      mask = BREV(mask);
+ 
+-      const position_type fullBytes = __clz(mask);
++      const position_type fullBytes = CLZ(mask);
+ 
+       if (fullBytes < LZ4_DECOMP_THREADS_PER_CHUNK) {
+         return fullBytes * 0xff + rawAt(idx)[fullBytes];
+@@ -324,13 +388,13 @@
+         byte = m_compData[idx + threadIdx.x];
+       }
+ 
+-      uint32_t mask = warpBallot(byte != 0xff);
+-      mask = __brev(mask);
++      lane_mask_t mask = warpBallot(byte != 0xff);
++      mask = BREV(mask);
+ 
+-      const position_type fullBytes = __clz(mask);
++      const position_type fullBytes = CLZ(mask);
+ 
+       if (fullBytes < LZ4_DECOMP_THREADS_PER_CHUNK) {
+-        return fullBytes * 0xff + __shfl_sync(0xffffffff, byte, fullBytes);
++        return fullBytes * 0xff + SHFL1(byte, fullBytes);
+       } else {
+         return LZ4_DECOMP_THREADS_PER_CHUNK * 0xff;
+       }
+@@ -493,7 +557,7 @@
+ inline __device__ position_type hash(const word_type key, position_type hash_table_size)
+ {
+   // needs to be 12 bits
+-  return (__brev(key) + (key ^ 0xc375)) & (hash_table_size - 1);
++  return (__brev(key) + (key ^ 0xc375)) & (hash_table_size - 1); //: key type is not depending on warpsize
+ }
+ 
+ inline __device__ uint8_t encodePair(const uint8_t t1, const uint8_t t2)
+@@ -539,12 +603,12 @@
+   position_type match_length = length - next_location - min_ending_literals;
+   for (position_type j = 0; j + next_location + min_ending_literals < length; j += blockDim.x) {
+     const position_type i = threadIdx.x + j;
+-    int no_matches = i + next_location + min_ending_literals < length
++    signed_lane_mask_t no_matches = i + next_location + min_ending_literals < length
+                     ? (data[prev_location + i] != data[next_location + i])
+                     : 1;
+     no_matches = warpBallot(no_matches);
+     if (no_matches) {
+-      match_length = j + __clz(__brev(no_matches));
++      match_length = j + CLZ(BREV(no_matches));
+       break;
+     }
+   }
+@@ -632,7 +696,14 @@
+   if (token.num_matches > 0) {
+     assert(offset > 0);
+ 
++    #ifdef NVCOMP_22
+     writeWord(compData + comp_idx, offset);
++    #else
++    //: TODO nvCOMP 2.1 version, what is the difference / in performance?
++    if (threadIdx.x == 0) {
++        writeWord(compData + comp_idx, offset);
++    }
++    #endif
+     comp_idx += sizeof(offset);
+ 
+     // -> add match length
+@@ -645,7 +716,7 @@
+ 
+ inline __device__ int numValidThreadsToMask(const int numValidThreads)
+ {
+-  return 0xffffffff >> (32 - numValidThreads);
++  return LANE_MASK_FULL >> (warpsize - numValidThreads);
+ }
+ 
+ inline __device__ void insertHashTableWarp(
+@@ -660,18 +731,19 @@
+   if (threadIdx.x < numValidThreads) {
+     const int match
+         = warpMatchAny(numValidThreadsToMask(numValidThreads), hashPos);
+-    if (!match || 31 - __clz(match) == threadIdx.x) {
++    if (!match || (warpsize-1) - CLZ(match) == threadIdx.x) {
+       // I'm the last match -- can insert
+       hashTable[hashPos] = pos & MAX_OFFSET;
+     }
+   }
+ 
+-  __syncwarp();
++    SYNCWARP1();
+ }
+ 
+ template<typename ALIGNMENT>
+ inline __device__ word_type shuffleLiterals(word_type literals);
+ 
++//: warpsize64: potential warpsize32 dependency named in comment.
+ /**
+  * Each thread needs a four byte word, but only separated by sizeof(ALIGNMENT)
+  * e.g.: for two threads, the five bytes [ 0x12 0x34 0x56 0x78 0x9a ] would
+@@ -685,12 +757,13 @@
+   // collect first byte
+   word_type next = literals;
+   // collect second byte
+-  next |= __shfl_down_sync(0xffffffff, next, 1) << 8;
++  next |= SHFL1_DOWN(next, 1) << 8;
+   // collect third and fourth bytes
+-  next |= __shfl_down_sync(0xffffffff, next, 2) << 16;
++  next |= SHFL1_DOWN(next, 2) << 16;
+   return next;
+ }
+ 
++//: warpsize64: potential warpsize32 dependency named in comment.
+ /**
+  * We shuffle on 16-bit alignment, so six bytes [ 0x12 0x34 0x56 0x78 0x9a 0x0b ]
+  * would be assigned [0x78563412 0x0b9a7856 ] to the two threads. We only fill
+@@ -703,7 +776,7 @@
+   // collect first and second bytes
+   word_type next = literals;
+   // collect third and fourth byte
+-  next |= __shfl_down_sync(0xffffffff, next, 1) << 16;
++  next |= SHFL1_DOWN(next, 1) << 16;
+   return next;
+ }
+ 
+@@ -731,7 +804,7 @@
+   static_assert(sizeof(T) <= 4, "Max alignment support is 4 bytes");
+ 
+   static_assert(
+-      LZ4_COMP_THREADS_PER_CHUNK <= 32,
++      LZ4_COMP_THREADS_PER_CHUNK <= warpsize,
+       "Compression can be done with at "
+       "most one warp");
+ 
+@@ -740,11 +813,11 @@
+   const position_type typed_length = divRoundUp(length, sizeof(T));
+ 
+   for (position_type i = threadIdx.x; i < hash_table_size;
+-       i += LZ4_COMP_THREADS_PER_CHUNK) {
++    i += LZ4_COMP_THREADS_PER_CHUNK) {
+     hashTable[i] = NULL_OFFSET;
+   }
+ 
+-  __syncwarp();
++  SYNCWARP1();
+ 
+   constexpr position_type last_valid_match = divRoundUp(LAST_VALID_MATCH_BYTES, sizeof(T));
+   constexpr position_type min_ending_literals = divRoundUp(MIN_ENDING_LITERALS_BYTES, sizeof(T));
+@@ -782,6 +855,9 @@
+ 
+       // the number of threads which won't have enough literals - read
+       // shuffleLiterals comment for more details.
++      //: warpsize64: ma require extra care
++      //: invalid_threads:
++      //: uint8_t: 3/1 = 3, uint16_t: 3/2 = 1, uint32_t: 3/4 = 0
+       constexpr int invalid_threads = 3 / sizeof(T);
+       // if we're at the end of the data, mark them as inactive.
+       const int numValidThreads = min(
+@@ -790,7 +866,7 @@
+ 
+       // first try to find a local match
+       position_type match_location = typed_length;
+-      int match_mask_self = 0;
++      signed_lane_mask_t match_mask_self = 0;
+       if (threadIdx.x < numValidThreads) {
+         match_mask_self
+             = warpMatchAny(numValidThreadsToMask(numValidThreads), next);
+@@ -798,21 +874,21 @@
+ 
+       // each thread has a mask of other threads with matches, next we need
+       // to find the first thread with a match before it
+-      const int match_mask_warp = warpBallot(
+-          match_mask_self && __clz(__brev(match_mask_self)) != threadIdx.x);
++      const signed_lane_mask_t match_mask_warp = warpBallot(
++          match_mask_self && CLZ(BREV(match_mask_self)) != threadIdx.x);
+ 
+       int first_match_thread;
+       if (match_mask_warp) {
+         // find the byte offset (thread id) within the warp where the first
+         // match is located
+-        first_match_thread = __clz(__brev(match_mask_warp));
++        first_match_thread = CLZ(BREV(match_mask_warp));
+ 
+         // determine the global position for the finding thread
+-        match_location = __clz(__brev(match_mask_self)) + decomp_idx;
++        match_location = CLZ(BREV(match_mask_self)) + decomp_idx;
+ 
+         // comunicate the global position of the match to other threads
+         match_location
+-            = __shfl_sync(0xffffffff, match_location, first_match_thread);
++                = SHFL1(match_location, first_match_thread);
+       } else {
+         first_match_thread = numValidThreads;
+       }
+@@ -832,8 +908,8 @@
+                                     : 0;
+ 
+         // determine the first thread to find a match
+-        const int match = warpBallot(match_found);
+-        const int candidate_first_match_thread = __clz(__brev(match));
++        const signed_lane_mask_t match = warpBallot(match_found);
++        const int candidate_first_match_thread = CLZ(BREV(match));
+ 
+         assert(candidate_first_match_thread != threadIdx.x || match_found);
+         assert(!match_found || candidate_first_match_thread <= threadIdx.x);
+@@ -842,7 +918,7 @@
+           // if we found a valid match, and it occurs before a previously found
+           // match, use that
+           first_match_thread = candidate_first_match_thread;
+-          match_location = __shfl_sync(0xffffffff, offset, first_match_thread);
++            match_location = SHFL1(offset, first_match_thread);
+         }
+       }
+ 
+@@ -899,7 +975,7 @@
+     const position_type comp_end,
+     const position_type buf_end,
+     size_t* decompSize,
+-    nvcompStatus_t* decompStatus,
++        hipcompStatus_t* decompStatus,
+     bool output_decompressed)
+ {
+   BufferControl ctrl(buffer, compData, comp_end);
+@@ -1015,9 +1091,9 @@
+     }
+     if (output_decompressed && decompStatus != nullptr) {
+       decompStatus[0]
+-          = corrupted_sequence ? nvcompErrorCannotDecompress : nvcompSuccess;
++            = corrupted_sequence ? hipcompErrorCannotDecompress : hipcompSuccess;
+     }
+   }
+ }
+ 
+-} // namespace nvcomp
++} // namespace hipcomp

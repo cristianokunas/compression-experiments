@@ -1,0 +1,239 @@
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/CudaUtils.h	2026-03-10 11:00:24.322652302 -0300
++++ /ssd/cakunas/hip-compression-toolkit/src/HipUtils.hip	2026-01-27 16:32:31.231250637 -0300
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2019-2020, NVIDIA CORPORATION.  All rights reserved.
++ * Copyright (c) 2019-2021, NVIDIA CORPORATION.  All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions are met:
+@@ -23,97 +23,150 @@
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
++// MIT License
++//
++// Modifications Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
++//
++// Permission is hereby granted, free of charge, to any person obtaining a copy
++// of this software and associated documentation files (the "Software"), to deal
++// in the Software without restriction, including without limitation the rights
++// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++// copies of the Software, and to permit persons to whom the Software is
++// furnished to do so, subject to the following conditions:
++//
++// The above copyright notice and this permission notice shall be included in all
++// copies or substantial portions of the Software.
++//
++// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++// SOFTWARE.
+ 
+-#ifndef NVCOMP_CUDAUTILS_H
+-#define NVCOMP_CUDAUTILS_H
++#include "HipUtils.h"
+ 
+-#include "cuda_runtime.h"
++#include <sstream>
++#include <stdexcept>
+ 
+-#include <string>
++namespace hipcomp
++{
+ 
+-namespace nvcomp
++namespace
++{
++std::string to_string(const void* const ptr)
+ {
++  std::ostringstream oss;
++  oss << ptr;
++  return oss.str();
++}
++} // namespace
+ 
+-enum CopyDirection {
+-  HOST_TO_DEVICE = cudaMemcpyHostToDevice,
+-  DEVICE_TO_HOST = cudaMemcpyDeviceToHost,
+-  DEVICE_TO_DEVICE = cudaMemcpyDeviceToDevice
+-};
+-
+-class CudaUtils
+-{
+-public:
+-  /**
+-   * @brief Convert cuda errors into exceptions. Will throw an exception
+-   * unless `err == cudaSuccess`.
+-   *
+-   * @param err The error.
+-   * @param msg The message to attach to the exception.
+-   */
+-  static void check(const cudaError_t err, const std::string& msg = "");
+-
+-  static void sync(cudaStream_t stream);
+-
+-  static void check_last_error(const std::string& msg = "");
+-
+-  /**
+-   * @brief Perform checked asynchronous memcpy.
+-   *
+-   * @tparam T The data type.
+-   * @param dst The destination address.
+-   * @param src The source address.
+-   * @param count The number of elements to copy.
+-   * @param kind The direction of the copy.
+-   * @param stream THe stream to operate on.
+-   */
+-  template <typename T>
+-  static void copy_async(
+-      T* const dst,
+-      const T* const src,
+-      const size_t count,
+-      const CopyDirection kind,
+-      cudaStream_t stream)
+-  {
+-    check(
+-        cudaMemcpyAsync(dst, src, sizeof(T) * count,
+-          static_cast<cudaMemcpyKind>(kind), stream),
+-        "CudaUtils::copy_async(dst, src, count, kind, stream)");
++void HipUtils::check(const hipError_t err, const std::string& msg)
++{
++  if (err != hipSuccess) {
++    std::string errorStr(
++        "Encountered Hip Error: " + std::to_string(err) + ": '"
++        + std::string(hipGetErrorString(err)) + "'");
++    if (!msg.empty()) {
++      errorStr += ": " + msg;
++    }
++    errorStr += ".";
++
++    throw std::runtime_error(errorStr);
+   }
++}
+ 
+-  /**
+-   * @brief Perform a synchronous memcpy.
+-   *
+-   * @tparam T The data type.
+-   * @param dst The destination address.
+-   * @param src The source address.
+-   * @param count The number of elements to copy.
+-   * @param kind The direction of the copy.
+-   */
+-  template <typename T>
+-  static void copy(
+-      T* const dst,
+-      const T* const src,
+-      const size_t count,
+-      const CopyDirection kind)
+-  {
+-    check(
+-        cudaMemcpy(dst, src, sizeof(T) * count, static_cast<cudaMemcpyKind>(kind)),
+-        "CudaUtils::copy(dst, src, count, kind)");
++void HipUtils::sync(hipStream_t stream)
++{
++  check(hipStreamSynchronize(stream), "Failed to sync with stream");
++}
++
++void HipUtils::check_last_error(const std::string& msg)
++{
++  check(hipGetLastError(), msg);
++}
++
++const void* HipUtils::void_device_pointer(const void* const ptr)
++{
++  hipPointerAttribute_t attr;
++  check(
++      hipPointerGetAttributes(&attr, ptr),
++      "Failed to get pointer "
++      "attributes for pointer: "
++          + to_string(ptr));
++
++  if (!attr.devicePointer) {
++    throw std::runtime_error(
++        "Memory location is not accessible by the "
++        "current GPU: "
++        + to_string(ptr));
+   }
+ 
+-  static bool is_device_pointer(const void* ptr);
++  return attr.devicePointer;
++}
++
++bool HipUtils::is_device_pointer(const void* const ptr)
++{
++  hipPointerAttribute_t attr;
+ 
+-  template <typename T>
+-  static T* device_pointer(T* const ptr)
+-  {
+-    return reinterpret_cast<T*>(void_device_pointer(ptr));
++  hipError_t err = hipPointerGetAttributes(&attr, ptr);
++
++  #if defined(__HIP_PLATFORM_NVIDIA__) || defined(__HIP_PLATFORM_NVCC__)
++  if (err == hipErrorInvalidValue) {
++    int cuda_version;
++    check(
++        hipRuntimeGetVersion(&cuda_version),
++        "Failed to get runtime "
++        "verison.");
++
++    if (cuda_version < 11000) {
++      // error is normal for non-device memory -- clear the error and return
++      // false
++      (void)hipGetLastError();
++      return false;
++    }
+   }
++  #else
++  if (err == hipErrorInvalidValue) {
++    // error is normal for non-device memory -- clear the error and return
++    // false
++    static_cast<void>(hipGetLastError());
++    return false;
++  }
++  #endif
++
++  // if we continue, make sure we successfully got pointer information
++  check(
++      err,
++      "Failed to get pointer "
++      "attributes for pointer: "
++          + to_string(ptr));
++
++  return attr.type == hipMemoryTypeDevice;
++}
+ 
+-private:
+-  static const void* void_device_pointer(const void* ptr);
+-  static void* void_device_pointer(void* ptr);
+-};
++void* HipUtils::void_device_pointer(void* const ptr)
++{
++  hipPointerAttribute_t attr;
++  // we don't need to worry about the difference between cuda 10 and cuda 11
++  // here, as if it's not a device pointer, we want throw an exception either
++  // way.
++  check(
++      hipPointerGetAttributes(&attr, ptr),
++      "Failed to get pointer "
++      "attributes for pointer: "
++          + to_string(ptr));
++
++  if (!attr.devicePointer) {
++    throw std::runtime_error(
++        "Memory location is not accessible by the "
++        "current GPU: "
++        + to_string(ptr));
++  }
+ 
+-} // namespace nvcomp
++  return attr.devicePointer;
++}
+ 
+-#endif
++} // namespace hipcomp

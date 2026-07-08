@@ -1,0 +1,224 @@
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/BitPackGPU.hip	2026-03-10 11:01:07.578836153 -0300
++++ /ssd/cakunas/hip-compression-toolkit/src/BitPackGPU.hip	2026-01-27 16:32:31.227250622 -0300
+@@ -1,4 +1,3 @@
+-#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -26,10 +25,32 @@
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
++// MIT License
++//
++// Modifications Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
++//
++// Permission is hereby granted, free of charge, to any person obtaining a copy
++// of this software and associated documentation files (the "Software"), to deal
++// in the Software without restriction, including without limitation the rights
++// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++// copies of the Software, and to permit persons to whom the Software is
++// furnished to do so, subject to the following conditions:
++//
++// The above copyright notice and this permission notice shall be included in all
++// copies or substantial portions of the Software.
++//
++// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++// SOFTWARE.
+ 
+ #include "BitPackGPU.h"
+ #include "unpack.h"
+ #include "common.h"
++#include "amd_optimizations.h"
+ 
+ #include <algorithm>
+ #include <cassert>
+@@ -43,31 +64,31 @@
+  * DEFINES ********************************************************************
+  *****************************************************************************/
+ 
+-#define NVCOMP_TYPE_SWITCH(type_var, func, ...)                                \
++#define HIPCOMP_TYPE_SWITCH(type_var, func, ...)                                \
+   do {                                                                         \
+     switch (type_var) {                                                        \
+-    case NVCOMP_TYPE_CHAR:                                                     \
++    case HIPCOMP_TYPE_CHAR:                                                     \
+       func<char, uint32_t, char>(__VA_ARGS__);                                 \
+       break;                                                                   \
+-    case NVCOMP_TYPE_UCHAR:                                                    \
++    case HIPCOMP_TYPE_UCHAR:                                                    \
+       func<unsigned char, uint32_t, unsigned char>(__VA_ARGS__);               \
+       break;                                                                   \
+-    case NVCOMP_TYPE_SHORT:                                                    \
++    case HIPCOMP_TYPE_SHORT:                                                    \
+       func<short, uint32_t, short>(__VA_ARGS__);                               \
+       break;                                                                   \
+-    case NVCOMP_TYPE_USHORT:                                                   \
++    case HIPCOMP_TYPE_USHORT:                                                   \
+       func<unsigned short, uint32_t, unsigned short>(__VA_ARGS__);             \
+       break;                                                                   \
+-    case NVCOMP_TYPE_INT:                                                      \
++    case HIPCOMP_TYPE_INT:                                                      \
+       func<int, uint32_t, int>(__VA_ARGS__);                                   \
+       break;                                                                   \
+-    case NVCOMP_TYPE_UINT:                                                     \
++    case HIPCOMP_TYPE_UINT:                                                     \
+       func<unsigned int, uint32_t, unsigned int>(__VA_ARGS__);                 \
+       break;                                                                   \
+-    case NVCOMP_TYPE_LONGLONG:                                                 \
++    case HIPCOMP_TYPE_LONGLONG:                                                 \
+       func<long long, uint64_t, long long>(__VA_ARGS__);                       \
+       break;                                                                   \
+-    case NVCOMP_TYPE_ULONGLONG:                                                \
++    case HIPCOMP_TYPE_ULONGLONG:                                                \
+       func<unsigned long long, uint64_t, unsigned long long>(__VA_ARGS__);     \
+       break;                                                                   \
+     default:                                                                   \
+@@ -75,7 +96,7 @@
+     }                                                                          \
+   } while (0)
+ 
+-namespace nvcomp
++namespace hipcomp
+ {
+ 
+ /******************************************************************************
+@@ -85,7 +106,9 @@
+ namespace
+ {
+ 
+-constexpr int const BLOCK_SIZE = 256;
++// Use AMD-optimized block size (multiple of wavefront size 64)
++// 256 = 4 wavefronts per block, good balance for bit packing operations
++constexpr int const BLOCK_SIZE = amd::block_size::SMALL;
+ 
+ // only used for min/max
+ constexpr int const BLOCK_WIDTH = 4096;
+@@ -135,20 +158,57 @@
+ __device__ void
+ reduceMinAndMax(T* const minBuffer, T* const maxBuffer, int const blockEnd)
+ {
+-  // cooperatively compute min and max
+-  for (int d = BLOCK_SIZE / 2; d > 0; d >>= 1) {
+-    if (threadIdx.x < BLOCK_SIZE / 2) {
+-      int const idx = threadIdx.x;
+-      if (idx < d && idx + d < blockEnd) {
+-        minBuffer[idx] = min(minBuffer[idx], minBuffer[d + idx]);
++  // AMD optimization: Use wave-level reductions first, then block-level
++  // This reduces the number of __syncthreads() calls and takes advantage
++  // of faster wave-level operations on AMD GPUs
++
++  int const tid = threadIdx.x;
++  int const lane_id = amd::wave_lane_id();
++  int const wave_id = amd::wave_id();
++  constexpr int NUM_WAVES = BLOCK_SIZE / amd::WAVEFRONT_SIZE;
++
++  // Wave-level reduction for min (first half of threads)
++  if (tid < BLOCK_SIZE / 2 && tid < blockEnd) {
++    T waveMin = minBuffer[tid];
++    waveMin = amd::wave_reduce_min(waveMin);
++
++    // First lane of each wave writes result back
++    if (amd::is_wave_first_lane()) {
++      minBuffer[wave_id] = waveMin;
++    }
++  }
++
++  // Wave-level reduction for max (second half of threads)
++  if (tid >= BLOCK_SIZE / 2 && tid - (BLOCK_SIZE / 2) < blockEnd) {
++    T waveMax = maxBuffer[tid - (BLOCK_SIZE / 2)];
++    waveMax = amd::wave_reduce_max(waveMax);
++
++    // First lane of each wave writes result back
++    if (amd::is_wave_first_lane()) {
++      maxBuffer[wave_id] = waveMax;
++    }
++  }
++
++  __syncthreads();
++
++  // Final reduction across wave results (only need NUM_WAVES threads)
++  if (tid < NUM_WAVES / 2) {
++    // Reduce min values from all waves
++    for (int d = NUM_WAVES / 2; d > 0; d >>= 1) {
++      if (tid < d) {
++        minBuffer[tid] = min(minBuffer[tid], minBuffer[tid + d]);
+       }
+-    } else {
+-      int const idx = threadIdx.x - (BLOCK_SIZE / 2);
+-      if (idx < d && idx + d < blockEnd) {
+-        maxBuffer[idx] = max(maxBuffer[idx], maxBuffer[d + idx]);
++      __syncthreads();
++    }
++  } else if (tid >= NUM_WAVES / 2 && tid < NUM_WAVES) {
++    // Reduce max values from all waves
++    int idx = tid - (NUM_WAVES / 2);
++    for (int d = NUM_WAVES / 2; d > 0; d >>= 1) {
++      if (idx < d) {
++        maxBuffer[idx] = max(maxBuffer[idx], maxBuffer[idx + d]);
+       }
++      __syncthreads();
+     }
+-    __syncthreads();
+   }
+ }
+ 
+@@ -162,7 +222,7 @@
+ {
+ 
+ template <typename LIMIT, typename INPUT>
+-__global__ void bitPackConfigScanKernel(
++__global__ AMD_LAUNCH_BOUNDS_COMPUTE void bitPackConfigScanKernel(
+     LIMIT* const minValue,
+     LIMIT* const maxValue,
+     INPUT const* const in,
+@@ -223,7 +283,7 @@
+ }
+ 
+ template <typename LIMIT, typename INPUT>
+-__global__ void bitPackConfigFinalizeKernel(
++__global__ AMD_LAUNCH_BOUNDS_BALANCED void bitPackConfigFinalizeKernel(
+     LIMIT const* const inMin,
+     LIMIT const* const inMax,
+     unsigned char* const* const numBitsPtr,
+@@ -551,7 +611,7 @@
+ void BitPackGPU::compress(
+     void* const workspace,
+     const size_t workspaceSize,
+-    const nvcompType_t inType,
++    const hipcompType_t inType,
+     void* const* const outPtr,
+     const void* const in,
+     const size_t* const numPtr,
+@@ -567,7 +627,7 @@
+         + ", need " + std::to_string(reqWorkSize));
+   }
+ 
+-  NVCOMP_TYPE_SWITCH(
++  HIPCOMP_TYPE_SWITCH(
+       inType,
+       bitPackInternal,
+       workspace,
+@@ -581,13 +641,13 @@
+ }
+ 
+ size_t
+-BitPackGPU::requiredWorkspaceSize(size_t const num, const nvcompType_t type)
++BitPackGPU::requiredWorkspaceSize(size_t const num, const hipcompType_t type)
+ {
+   // we need a space for min values, and a space for maximum values
+   size_t const bytes
+-      = sizeOfnvcompType(type) * getReduceScratchSpaceSize(num) * 2;
++      = sizeOfhipcompType(type) * getReduceScratchSpaceSize(num) * 2;
+ 
+   return bytes;
+ }
+ 
+-} // namespace nvcomp
++} // namespace hipcomp
+\ No newline at end of file

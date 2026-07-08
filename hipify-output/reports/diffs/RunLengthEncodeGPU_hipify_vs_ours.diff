@@ -1,0 +1,99 @@
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/RunLengthEncodeGPU.h	2026-03-10 11:00:24.322652302 -0300
++++ /ssd/cakunas/hip-compression-toolkit/src/RunLengthEncodeGPU.h	2026-01-27 16:32:31.231250637 -0300
+@@ -25,17 +25,38 @@
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
++// MIT License
++//
++// Modifications Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
++//
++// Permission is hereby granted, free of charge, to any person obtaining a copy
++// of this software and associated documentation files (the "Software"), to deal
++// in the Software without restriction, including without limitation the rights
++// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++// copies of the Software, and to permit persons to whom the Software is
++// furnished to do so, subject to the following conditions:
++//
++// The above copyright notice and this permission notice shall be included in all
++// copies or substantial portions of the Software.
++//
++// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++// SOFTWARE.
+ 
+-#ifndef NVCOMP_RUNLENGTHENCODEGPU_H
+-#define NVCOMP_RUNLENGTHENCODEGPU_H
++#ifndef HIPCOMP_RUNLENGTHENCODEGPU_H
++#define HIPCOMP_RUNLENGTHENCODEGPU_H
+ 
+-#include "nvcomp.h"
++#include "hipcomp.h"
+ 
+-#include "cuda_runtime.h"
++#include "hip/hip_runtime.h"
+ 
+ #include <cstddef>
+ 
+-namespace nvcomp
++namespace hipcomp
+ {
+ 
+ class RunLengthEncodeGPU
+@@ -59,14 +80,14 @@
+   static void compress(
+       void* workspace,
+       size_t workspaceSize,
+-      nvcompType_t valueType,
++      hipcompType_t valueType,
+       void* const outValues,
+-      nvcompType_t countType,
++      hipcompType_t countType,
+       void* const outCounts,
+       size_t* numOutDevice,
+       const void* in,
+       const size_t num,
+-      cudaStream_t stream);
++      hipStream_t stream);
+ 
+   /**
+    * @brief Encode a set of data using run length encoding.
+@@ -87,15 +108,15 @@
+   static void compressDownstream(
+       void* workspace,
+       size_t workspaceSize,
+-      nvcompType_t valueType,
++      hipcompType_t valueType,
+       void** const outValuesPtr,
+-      nvcompType_t countType,
++      hipcompType_t countType,
+       void** const outCountsPtr,
+       size_t* numOutDevice,
+       const void* in,
+       const size_t* numDevice,
+       const size_t maxNum,
+-      cudaStream_t stream);
++      hipStream_t stream);
+ 
+   /**
+    * @brief Get the required size of the workspace in bytes.
+@@ -107,11 +128,11 @@
+    * @return The size in bytes of the required workspace.
+    */
+   static size_t requiredWorkspaceSize(
+-      size_t num, nvcompType_t valueType, nvcompType_t countType);
++      size_t num, hipcompType_t valueType, hipcompType_t countType);
+ 
+ private:
+ };
+ 
+-} // namespace nvcomp
++} // namespace hipcomp
+ 
+-#endif
++#endif
+\ No newline at end of file

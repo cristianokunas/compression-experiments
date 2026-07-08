@@ -1,0 +1,800 @@
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/BitcompManager.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/BitcompManager.hip	2026-03-10 11:00:26.662662247 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2020-2021, NVIDIA CORPORATION. All rights reserved.
+  *
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/SnappyHlifKernels.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/SnappyHlifKernels.hip	2026-03-10 11:00:28.590670444 -0300
+@@ -102,7 +102,7 @@
+ void snappyHlifBatchCompress(
+     const CompressArgs& comp_args,
+     const uint32_t max_ctas,
+-    cudaStream_t stream) 
++    hipStream_t stream) 
+ {
+   const dim3 grid(max_ctas);
+   const dim3 block(COMP_THREADS_PER_BLOCK);
+@@ -120,7 +120,7 @@
+     const size_t* comp_chunk_offsets,
+     const size_t* comp_chunk_sizes,
+     const uint32_t max_ctas,
+-    cudaStream_t stream,
++    hipStream_t stream,
+     nvcompStatus_t* output_status) 
+ {
+   const dim3 grid(max_ctas);
+@@ -138,11 +138,11 @@
+ 
+ size_t snappyHlifCompMaxBlockOccupancy(const int device_id) 
+ {
+-  cudaDeviceProp device_prop;
+-  cudaGetDeviceProperties(&device_prop, device_id);
++  hipDeviceProp_t device_prop;
++  hipGetDeviceProperties(&device_prop, device_id);
+   int num_blocks_per_sm;
+   constexpr int shmem_size = 0;
+-  cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++  hipOccupancyMaxActiveBlocksPerMultiprocessor(
+       &num_blocks_per_sm, 
+       HlifCompressBatchKernel<snappy_compress_wrapper>, 
+       COMP_THREADS_PER_BLOCK,
+@@ -153,11 +153,11 @@
+ 
+ size_t snappyHlifDecompMaxBlockOccupancy(const int device_id) 
+ {
+-  cudaDeviceProp device_prop;
+-  cudaGetDeviceProperties(&device_prop, device_id);
++  hipDeviceProp_t device_prop;
++  hipGetDeviceProperties(&device_prop, device_id);
+   int num_blocks_per_sm;
+   constexpr int shmem_size = 0;
+-  cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++  hipOccupancyMaxActiveBlocksPerMultiprocessor(
+       &num_blocks_per_sm, 
+       HlifDecompressBatchKernel<snappy_decompress_wrapper, 1>, 
+       DECOMP_THREADS_PER_BLOCK, 
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/CascadedHlifKernels.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/CascadedHlifKernels.hip	2026-03-10 11:00:32.714687972 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -146,7 +147,7 @@
+ void cascadedHlifBatchCompress(
+     const CompressArgs& compress_args,
+     const uint32_t max_ctas,
+-    cudaStream_t stream,
++    hipStream_t stream,
+     const nvcompBatchedCascadedOpts_t* options)
+ {
+   const dim3 batch_size(max_ctas);
+@@ -185,7 +186,7 @@
+     const size_t* comp_chunk_offsets,
+     const size_t* comp_chunk_sizes,
+     const uint32_t max_ctas,
+-    cudaStream_t stream,
++    hipStream_t stream,
+     nvcompStatus_t* output_status,
+     const nvcompBatchedCascadedOpts_t* options)
+ {
+@@ -259,8 +260,8 @@
+ 
+ size_t cascadedHlifCompMaxBlockOccupancy(const int device_id, nvcompType_t type)
+ {
+-  cudaDeviceProp deviceProp;
+-  cudaGetDeviceProperties(&deviceProp, device_id);
++  hipDeviceProp_t deviceProp;
++  hipGetDeviceProperties(&deviceProp, device_id);
+   int numBlocksPerSM = 1;
+   // This kernel only uses fixed-size shared memory, not shared memory
+   // determined at kernel invocation time.
+@@ -269,7 +270,7 @@
+   // The values will almost certainly be identical for all data types,
+   // but just in case, handle types separately.
+   if (type == NVCOMP_TYPE_CHAR || type == NVCOMP_TYPE_UCHAR) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifCompressBatchKernel<
+             cascaded_compress_wrapper<uint8_t, size_t, threadblock_size>,
+@@ -277,7 +278,7 @@
+         threadblock_size,
+         runtime_shmem_size);
+   } else if (type == NVCOMP_TYPE_SHORT || type == NVCOMP_TYPE_USHORT) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifCompressBatchKernel<
+             cascaded_compress_wrapper<uint16_t, size_t, threadblock_size>,
+@@ -285,7 +286,7 @@
+         threadblock_size,
+         runtime_shmem_size);
+   } else if (type == NVCOMP_TYPE_INT || type == NVCOMP_TYPE_UINT) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifCompressBatchKernel<
+             cascaded_compress_wrapper<uint32_t, size_t, threadblock_size>,
+@@ -293,7 +294,7 @@
+         threadblock_size,
+         runtime_shmem_size);
+   } else if (type == NVCOMP_TYPE_LONGLONG || type == NVCOMP_TYPE_ULONGLONG) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifCompressBatchKernel<
+             cascaded_compress_wrapper<uint64_t, size_t, threadblock_size>,
+@@ -308,8 +309,8 @@
+ size_t cascadedHlifDecompMaxBlockOccupancy(
+     const int device_id, nvcompType_t type)
+ {
+-  cudaDeviceProp deviceProp;
+-  cudaGetDeviceProperties(&deviceProp, device_id);
++  hipDeviceProp_t deviceProp;
++  hipGetDeviceProperties(&deviceProp, device_id);
+   int numBlocksPerSM = 1;
+   // This kernel only uses fixed-size shared memory, not shared memory
+   // determined at kernel invocation time.
+@@ -318,7 +319,7 @@
+   // The values will almost certainly be identical for all data types,
+   // but just in case, handle types separately.
+   if (type == NVCOMP_TYPE_CHAR || type == NVCOMP_TYPE_UCHAR) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifDecompressBatchKernel<
+             cascaded_decompress_wrapper<uint8_t, size_t, threadblock_size>,
+@@ -327,7 +328,7 @@
+         threadblock_size,
+         runtime_shmem_size);
+   } else if (type == NVCOMP_TYPE_SHORT || type == NVCOMP_TYPE_USHORT) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifDecompressBatchKernel<
+             cascaded_decompress_wrapper<uint16_t, size_t, threadblock_size>,
+@@ -336,7 +337,7 @@
+         threadblock_size,
+         runtime_shmem_size);
+   } else if (type == NVCOMP_TYPE_INT || type == NVCOMP_TYPE_UINT) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifDecompressBatchKernel<
+             cascaded_decompress_wrapper<uint32_t, size_t, threadblock_size>,
+@@ -345,7 +346,7 @@
+         threadblock_size,
+         runtime_shmem_size);
+   } else if (type == NVCOMP_TYPE_LONGLONG || type == NVCOMP_TYPE_ULONGLONG) {
+-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++    hipOccupancyMaxActiveBlocksPerMultiprocessor(
+         &numBlocksPerSM,
+         HlifDecompressBatchKernel<
+             cascaded_decompress_wrapper<uint64_t, size_t, threadblock_size>,
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/LZ4HlifKernels.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/highlevel/LZ4HlifKernels.hip	2026-03-10 11:00:35.638700400 -0300
+@@ -33,7 +33,7 @@
+ #include "common.h"
+ 
+ #include "nvcomp_common_deps/hlif_shared.cuh"
+-#include "cuda_runtime.h"
++#include "hip/hip_runtime.h"
+ #include "nvcomp_cub.cuh"
+ 
+ #include <cassert>
+@@ -138,7 +138,7 @@
+     const position_type hash_table_size,
+     const uint32_t max_ctas,
+     nvcompType_t data_type,
+-    cudaStream_t stream) 
++    hipStream_t stream) 
+ {
+   const dim3 grid(max_ctas);
+   const dim3 block(LZ4_COMP_THREADS_PER_CHUNK);
+@@ -179,7 +179,7 @@
+     const size_t* comp_chunk_offsets,
+     const size_t* comp_chunk_sizes,
+     const uint32_t max_ctas,
+-    cudaStream_t stream,
++    hipStream_t stream,
+     nvcompStatus_t* output_status) 
+ {
+   const dim3 grid(max_ctas);
+@@ -200,14 +200,14 @@
+ 
+ size_t batchedLZ4CompMaxBlockOccupancy(nvcompType_t data_type, const int device_id)
+ {
+-  cudaDeviceProp device_prop;
+-  cudaGetDeviceProperties(&device_prop, device_id);
++  hipDeviceProp_t device_prop;
++  hipGetDeviceProperties(&device_prop, device_id);
+   int num_blocks_per_sm;
+   switch (data_type) {
+     case NVCOMP_TYPE_BITS:
+     case NVCOMP_TYPE_CHAR:
+     case NVCOMP_TYPE_UCHAR:
+-      cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++      hipOccupancyMaxActiveBlocksPerMultiprocessor(
+           &num_blocks_per_sm, 
+           HlifCompressBatchKernel<lz4_compress_wrapper<uint8_t>, LZ4CompressorArgs>, 
+           LZ4_COMP_THREADS_PER_CHUNK, 
+@@ -215,7 +215,7 @@
+       break;
+     case NVCOMP_TYPE_SHORT:
+     case NVCOMP_TYPE_USHORT:
+-      cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++      hipOccupancyMaxActiveBlocksPerMultiprocessor(
+           &num_blocks_per_sm, 
+           HlifCompressBatchKernel<lz4_compress_wrapper<uint16_t>, LZ4CompressorArgs>, 
+           LZ4_COMP_THREADS_PER_CHUNK, 
+@@ -223,7 +223,7 @@
+       break;
+     case NVCOMP_TYPE_INT:
+     case NVCOMP_TYPE_UINT:
+-      cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++      hipOccupancyMaxActiveBlocksPerMultiprocessor(
+           &num_blocks_per_sm, 
+           HlifCompressBatchKernel<lz4_compress_wrapper<uint32_t>, LZ4CompressorArgs>, 
+           LZ4_COMP_THREADS_PER_CHUNK, 
+@@ -238,11 +238,11 @@
+ 
+ size_t batchedLZ4DecompMaxBlockOccupancy(nvcompType_t data_type, const int device_id)
+ {
+-  cudaDeviceProp device_prop;
+-  cudaGetDeviceProperties(&device_prop, device_id);
++  hipDeviceProp_t device_prop;
++  hipGetDeviceProperties(&device_prop, device_id);
+   int num_blocks_per_sm;
+   constexpr int shmem_size = DECOMP_INPUT_BUFFER_SIZE * LZ4_DECOMP_CHUNKS_PER_BLOCK;
+-  cudaOccupancyMaxActiveBlocksPerMultiprocessor(
++  hipOccupancyMaxActiveBlocksPerMultiprocessor(
+       &num_blocks_per_sm, 
+       HlifDecompressBatchKernel<lz4_decompress_wrapper, LZ4_DECOMP_CHUNKS_PER_BLOCK>, 
+       LZ4_DECOMP_THREADS_PER_CHUNK * LZ4_DECOMP_CHUNKS_PER_BLOCK, 
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/DeltaGPU.cu	2026-03-10 11:00:24.322652302 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/DeltaGPU.hip	2026-03-10 11:00:37.394707864 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -106,7 +107,7 @@
+     void const* const in,
+     const size_t* const numDevice,
+     const size_t maxNum,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   VALUE** const outTypedPtr = reinterpret_cast<VALUE**>(outPtr);
+   const VALUE* const inTyped = static_cast<const VALUE*>(in);
+@@ -115,8 +116,8 @@
+   const dim3 grid(roundUpDiv(maxNum, BLOCK_SIZE));
+   deltaKernel<<<grid, block, 0, stream>>>(
+       outTypedPtr, inTyped, numDevice, maxNum);
+-  cudaError_t err = cudaGetLastError();
+-  if (err != cudaSuccess) {
++  hipError_t err = hipGetLastError();
++  if (err != hipSuccess) {
+     throw std::runtime_error(
+         "Failed to launch deltaKernel kernel: " + std::to_string(err));
+   }
+@@ -136,7 +137,7 @@
+     const void* const in,
+     const size_t* const numDevice,
+     const size_t maxNum,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   NVCOMP_TYPE_ONE_SWITCH(
+       inType, deltaLaunch, outPtr, in, numDevice, maxNum, stream);
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/gdeflateKernels.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/gdeflateKernels.hip	2026-03-10 11:00:38.310711759 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2017-2021, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -65,7 +66,7 @@
+ void convertGdeflateOutputStatuses(
+     nvcompStatus_t *statuses,
+     size_t batch_size,
+-    cudaStream_t stream) {
++    hipStream_t stream) {
+     const int threads = 512;
+     int blocks = (batch_size - 1) / threads + 1;
+     convertGdeflateOutputStatusesKernel<<<blocks,threads,0,stream>>>(statuses, batch_size);
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/LZ4CompressionKernels.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/LZ4CompressionKernels.hip	2026-03-10 11:00:41.766726447 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -32,7 +33,7 @@
+ #include "TempSpaceBroker.h"
+ #include "common.h"
+ 
+-#include "cuda_runtime.h"
++#include "hip/hip_runtime.h"
+ #include "nvcomp_cub.cuh"
+ 
+ #include <cassert>
+@@ -144,7 +145,7 @@
+     uint8_t* const* const comp_data_device,
+     size_t* const comp_sizes_device,
+     nvcompType_t data_type,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+ 
+   position_type HT_size = lz4GetHashTableSize(max_chunk_size);
+@@ -210,7 +211,7 @@
+     uint8_t* const* const device_out_ptrs,
+     size_t* device_actual_uncompressed_bytes,
+     nvcompStatus_t* device_status_ptrs,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   const dim3 grid(roundUpDiv(batch_size, LZ4_DECOMP_CHUNKS_PER_BLOCK));
+   const dim3 block(LZ4_DECOMP_THREADS_PER_CHUNK, LZ4_DECOMP_CHUNKS_PER_BLOCK);
+@@ -232,7 +233,7 @@
+     const size_t* device_compressed_bytes,
+     size_t* device_uncompressed_bytes,
+     size_t batch_size,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   const dim3 grid(roundUpDiv(batch_size, LZ4_DECOMP_CHUNKS_PER_BLOCK));
+   const dim3 block(LZ4_DECOMP_THREADS_PER_CHUNK, LZ4_DECOMP_CHUNKS_PER_BLOCK);
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/SnappyBatchKernels.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/SnappyBatchKernels.hip	2026-03-10 11:00:44.022736036 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -144,7 +145,7 @@
+   gpu_snappy_status_s *outputs,
+   size_t* device_out_bytes,
+   int count,
+-  cudaStream_t stream)
++  hipStream_t stream)
+ {
+   dim3 dim_block(COMP_THREADS_PER_BLOCK, 1);  
+   dim3 dim_grid(count, 1);
+@@ -162,7 +163,7 @@
+     nvcompStatus_t* outputs,
+     size_t* device_out_bytes,
+     int count,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   uint32_t count32 = (count > 0) ? count : 0;
+   dim3 dim_block(DECOMP_THREADS_PER_BLOCK, 1);     
+@@ -179,7 +180,7 @@
+   const size_t* device_in_bytes,
+   size_t* device_out_bytes,
+   int count,
+-  cudaStream_t stream)
++  hipStream_t stream)
+ {
+   dim3 dim_block(32, 1);
+   dim3 dim_grid(count, 1);
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/BitcompBatch.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/BitcompBatch.hip	2026-03-10 11:00:47.246749739 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -67,7 +68,7 @@
+     void* const* device_compressed_ptrs,
+     size_t* device_compressed_bytes,
+     const nvcompBatchedBitcompFormatOpts format_opts,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   // Convert the NVCOMP type to a BITCOMP type
+   bitcompDataType_t dataType;
+@@ -149,10 +150,10 @@
+     size_t,      // temp_bytes, not used
+     void* const* device_uncompressed_ptrs,
+     nvcompStatus_t* device_statuses,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   // Synchronize the stream to make sure the compressed data is visible
+-  if (cudaStreamSynchronize(stream) != cudaSuccess)
++  if (hipStreamSynchronize(stream) != hipSuccess)
+     return nvcompErrorCudaError;
+ 
+   // Create a Bitcomp batch handle from the compressed data.
+@@ -194,7 +195,7 @@
+     const size_t* device_compressed_bytes,
+     size_t* device_uncompressed_bytes,
+     size_t batch_size,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   BTCHK(bitcompBatchGetUncompressedSizesAsync(
+       device_compressed_ptrs,
+@@ -240,7 +241,7 @@
+     void* const*,
+     size_t*,
+     const nvcompBatchedBitcompFormatOpts,
+-    cudaStream_t)
++    hipStream_t)
+ {
+   return nvcompErrorNotSupported;
+ }
+@@ -255,13 +256,13 @@
+     size_t,
+     void* const*,
+     nvcompStatus_t*,
+-    cudaStream_t)
++    hipStream_t)
+ {
+   return nvcompErrorNotSupported;
+ }
+ 
+ nvcompStatus_t nvcompBatchedBitcompGetDecompressSizeAsync(
+-    const void* const*, const size_t*, size_t*, size_t, cudaStream_t)
++    const void* const*, const size_t*, size_t*, size_t, hipStream_t)
+ {
+   return nvcompErrorNotSupported;
+ }
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/CascadedBatch.cu	2026-03-10 11:00:24.326652318 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/lowlevel/CascadedBatch.hip	2026-03-10 11:00:52.374771535 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -266,7 +267,7 @@
+     size_t batch_size,
+     void* const* device_compressed_ptrs,
+     size_t* device_compressed_bytes,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   constexpr int threadblock_size = cascaded_compress_threadblock_size;
+   cascaded_compression_kernel<data_type, size_t, threadblock_size>
+@@ -314,7 +315,7 @@
+     void* const* device_compressed_ptrs,
+     size_t* device_compressed_bytes,
+     const nvcompBatchedCascadedOpts_t format_opts,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   try {
+     NVCOMP_TYPE_ONE_SWITCH(
+@@ -351,7 +352,7 @@
+     size_t temp_bytes,
+     void* const* device_uncompressed_ptrs,
+     nvcompStatus_t* device_statuses,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   try {
+     // Just call kernel to perform compression. Macro for datatype happens
+@@ -418,7 +419,7 @@
+     const size_t* device_compressed_bytes,
+     size_t* device_uncompressed_bytes,
+     size_t batch_size,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   try {
+     get_decompress_size_kernel<<<
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/CudaUtils.cu	2026-03-10 11:00:24.322652302 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/CudaUtils.hip	2026-03-10 11:00:54.030778574 -0300
+@@ -42,12 +42,12 @@
+ }
+ } // namespace
+ 
+-void CudaUtils::check(const cudaError_t err, const std::string& msg)
++void CudaUtils::check(const hipError_t err, const std::string& msg)
+ {
+-  if (err != cudaSuccess) {
++  if (err != hipSuccess) {
+     std::string errorStr(
+         "Encountered Cuda Error: " + std::to_string(err) + ": '"
+-        + std::string(cudaGetErrorString(err)) + "'");
++        + std::string(hipGetErrorString(err)) + "'");
+     if (!msg.empty()) {
+       errorStr += ": " + msg;
+     }
+@@ -57,21 +57,21 @@
+   }
+ }
+ 
+-void CudaUtils::sync(cudaStream_t stream)
++void CudaUtils::sync(hipStream_t stream)
+ {
+-  check(cudaStreamSynchronize(stream), "Failed to sync with stream");
++  check(hipStreamSynchronize(stream), "Failed to sync with stream");
+ }
+ 
+ void CudaUtils::check_last_error(const std::string& msg)
+ {
+-  check(cudaGetLastError(), msg);
++  check(hipGetLastError(), msg);
+ }
+ 
+ const void* CudaUtils::void_device_pointer(const void* const ptr)
+ {
+-  cudaPointerAttributes attr;
++  hipPointerAttribute_t attr;
+   check(
+-      cudaPointerGetAttributes(&attr, ptr),
++      hipPointerGetAttributes(&attr, ptr),
+       "Failed to get pointer "
+       "attributes for pointer: "
+           + to_string(ptr));
+@@ -88,21 +88,21 @@
+ 
+ bool CudaUtils::is_device_pointer(const void* const ptr)
+ {
+-  cudaPointerAttributes attr;
++  hipPointerAttribute_t attr;
+ 
+-  cudaError_t err = cudaPointerGetAttributes(&attr, ptr);
++  hipError_t err = hipPointerGetAttributes(&attr, ptr);
+ 
+-  if (err == cudaErrorInvalidValue) {
++  if (err == hipErrorInvalidValue) {
+     int cuda_version;
+     check(
+-        cudaRuntimeGetVersion(&cuda_version),
++        hipRuntimeGetVersion(&cuda_version),
+         "Failed to get runtime "
+         "verison.");
+ 
+     if (cuda_version < 11000) {
+       // error is normal for non-device memory -- clear the error and return
+       // false
+-      (void)cudaGetLastError();
++      (void)hipGetLastError();
+       return false;
+     }
+   }
+@@ -114,17 +114,17 @@
+       "attributes for pointer: "
+           + to_string(ptr));
+ 
+-  return attr.type == cudaMemoryTypeDevice;
++  return attr.type == hipMemoryTypeDevice;
+ }
+ 
+ void* CudaUtils::void_device_pointer(void* const ptr)
+ {
+-  cudaPointerAttributes attr;
++  hipPointerAttribute_t attr;
+   // we don't need to worry about the difference between cuda 10 and cuda 11
+   // here, as if it's not a device pointer, we want throw an exception either
+   // way.
+   check(
+-      cudaPointerGetAttributes(&attr, ptr),
++      hipPointerGetAttributes(&attr, ptr),
+       "Failed to get pointer "
+       "attributes for pointer: "
+           + to_string(ptr));
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/RunLengthEncodeGPU.cu:70: unsupported device function "__shfl_down_sync":     val += __shfl_down_sync(mask, val, d, NUM_THREADS);
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/RunLengthEncodeGPU.cu	2026-03-10 11:00:24.322652302 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/RunLengthEncodeGPU.hip	2026-03-10 11:01:00.762807185 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -214,7 +215,7 @@
+ 
+     // prefixsum bit mask
+     {
+-      typedef cub::BlockScan<RUN, BLOCK_SIZE> BlockScan;
++      typedef hipcub::BlockScan<RUN, BLOCK_SIZE> BlockScan;
+       __shared__ typename BlockScan::TempStorage temp_storage;
+ 
+       BlockScan(temp_storage).ExclusiveSum(sum, sum);
+@@ -359,7 +360,7 @@
+ 
+   size_t workspaceSize = 0;
+   CudaUtils::check(
+-      cub::DeviceRunLengthEncode::Encode(
++      hipcub::DeviceRunLengthEncode::Encode(
+           nullptr,
+           workspaceSize,
+           inPtr,
+@@ -368,7 +369,7 @@
+           numPtr,
+           static_cast<int>(num),
+           0),
+-      "cub::DeviceRunLengthEncode::Encode() failed");
++      "hipcub::DeviceRunLengthEncode::Encode() failed");
+ 
+   workspaceSize = std::max(workspaceSize, downstreamWorkspaceSize<U>(num));
+ 
+@@ -384,7 +385,7 @@
+     size_t* numOutDevice,
+     void const* const in,
+     size_t const num,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   VALUE* const outValuesTyped = static_cast<VALUE*>(outValues);
+   COUNT* const outCountsTyped = static_cast<COUNT*>(outCounts);
+@@ -403,7 +404,7 @@
+       = workspaceSize - relativeEndOffset(workspace, alignedWorkspace);
+ 
+   CudaUtils::check(
+-      cub::DeviceRunLengthEncode::Encode(
++      hipcub::DeviceRunLengthEncode::Encode(
+           alignedWorkspace,
+           alignedWorkspaceSize,
+           inTyped,
+@@ -412,7 +413,7 @@
+           numOutDevice,
+           static_cast<int>(num),
+           stream),
+-      "cub::DeviceRunLengthEncode::Encode() failed");
++      "hipcub::DeviceRunLengthEncode::Encode() failed");
+ }
+ 
+ template <typename VALUE, typename COUNT>
+@@ -425,7 +426,7 @@
+     void const* const in,
+     size_t const* numInDevice,
+     const size_t maxNum,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   VALUE** const outValuesTypedPtr = reinterpret_cast<VALUE**>(outValuesPtr);
+   COUNT** const outCountsTypedPtr = reinterpret_cast<COUNT**>(outCountsPtr);
+@@ -465,9 +466,9 @@
+   // get output locations
+   size_t requiredSpace;
+   CudaUtils::check(
+-      cub::DeviceScan::ExclusiveSum(
++      hipcub::DeviceScan::ExclusiveSum(
+           nullptr, requiredSpace, blockSizes, blockPrefix, grid.x + 1, stream),
+-      "cub::DeviceScan::Exclusive() failed");
++      "hipcub::DeviceScan::Exclusive() failed");
+ 
+   size_t scanWorkspaceSize
+       = std::max(1024 * sizeof(COUNT), maxNum * sizeof(COUNT));
+@@ -477,14 +478,14 @@
+         + std::to_string(requiredSpace));
+   }
+   CudaUtils::check(
+-      cub::DeviceScan::ExclusiveSum(
++      hipcub::DeviceScan::ExclusiveSum(
+           scanWorkspace,
+           scanWorkspaceSize,
+           blockSizes,
+           blockPrefix,
+           grid.x + 1,
+           stream),
+-      "cub::DeviceScanExclusiveSum() failed");
++      "hipcub::DeviceScanExclusiveSum() failed");
+ 
+   // do actual compaction
+   rleReduceKernel<VALUE, COUNT, BLOCK_SIZE, GLOBAL_TILE_SIZE>
+@@ -521,7 +522,7 @@
+     size_t* const numOutDevice,
+     const void* const in,
+     const size_t num,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   NVCOMP_TYPE_TWO_SWITCH(
+       valueType,
+@@ -548,7 +549,7 @@
+     const void* const in,
+     const size_t* numInDevice,
+     const size_t maxNum,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   NVCOMP_TYPE_TWO_SWITCH(
+       valueType,
+--- /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/BitPackGPU.cu	2026-03-10 11:00:24.322652302 -0300
++++ /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/BitPackGPU.hip	2026-03-10 11:01:07.578836153 -0300
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+  * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+  *
+@@ -420,19 +421,19 @@
+     INPUT const* const in,
+     const size_t* const numDevice,
+     size_t const maxNum,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   const dim3 grid(
+       min(BLOCK_WIDTH, static_cast<int>(roundUpDiv(maxNum, BLOCK_SIZE))));
+   const dim3 block(BLOCK_SIZE);
+ 
+-  cudaError_t err;
++  hipError_t err;
+ 
+   // make sure the result will fit in a single block for the finalize kernel
+   bitPackConfigScanKernel<<<grid, block, 0, stream>>>(
+       minValueScratch, maxValueScratch, in, numDevice);
+-  err = cudaGetLastError();
+-  if (err != cudaSuccess) {
++  err = hipGetLastError();
++  if (err != hipSuccess) {
+     throw std::runtime_error(
+         "Failed to launch bitPackConfigScanKernel "
+         "kernel: "
+@@ -442,8 +443,8 @@
+   // determine numBits and convert min value
+   bitPackConfigFinalizeKernel<<<dim3(1), block, 0, stream>>>(
+       minValueScratch, maxValueScratch, numBitsPtr, minValOutPtr, numDevice);
+-  err = cudaGetLastError();
+-  if (err != cudaSuccess) {
++  err = hipGetLastError();
++  if (err != hipSuccess) {
+     throw std::runtime_error(
+         "Failed to launch bitPackConfigFinalizeKernel "
+         "kernel: "
+@@ -459,7 +460,7 @@
+     INPUT const* const in,
+     const size_t* const numDevice,
+     const size_t maxNum,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   static_assert(
+       BLOCK_SIZE % (sizeof(OUTPUT) * 8U) == 0,
+@@ -471,8 +472,8 @@
+ 
+   bitPackKernel<<<grid, block, 0, stream>>>(
+       numBitsDevicePtr, minValueDevicePtr, outPtr, in, numDevice);
+-  cudaError_t err = cudaGetLastError();
+-  if (err != cudaSuccess) {
++  hipError_t err = hipGetLastError();
++  if (err != hipSuccess) {
+     throw std::runtime_error(
+         "Failed to launch bitPackKernel kernel: " + std::to_string(err));
+   }
+@@ -487,7 +488,7 @@
+     void const* const in,
+     const size_t* const numDevice,
+     size_t const maxNum,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   OUT* const* const outputTypedPtr = reinterpret_cast<OUT* const*>(outPtr);
+   IN const* const inputTyped = static_cast<IN const*>(in);
+@@ -511,7 +512,7 @@
+     size_t const maxNum,
+     void* const* const minValueDevicePtr,
+     unsigned char* const* const numBitsDevicePtr,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   // cast voids to known types
+   LIMIT* const maxValueTyped = static_cast<LIMIT*>(workspace);
+@@ -557,7 +558,7 @@
+     const size_t maxNum,
+     void* const* const minValueDevicePtr,
+     unsigned char* const* const numBitsDevicePtr,
+-    cudaStream_t stream)
++    hipStream_t stream)
+ {
+   const size_t reqWorkSize = requiredWorkspaceSize(maxNum, inType);
+   if (workspaceSize < reqWorkSize) {
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/LZ4Kernels.cuh:332: unsupported device function "__shfl_sync":         return fullBytes * 0xff + __shfl_sync(0xffffffff, byte, fullBytes);
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/LZ4Kernels.cuh:687: unsupported device function "__shfl_down_sync":   next |= __shfl_down_sync(0xffffffff, next, 1) << 8;
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/LZ4Kernels.cuh:689: unsupported device function "__shfl_down_sync":   next |= __shfl_down_sync(0xffffffff, next, 2) << 16;
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/LZ4Kernels.cuh:705: unsupported device function "__shfl_down_sync":   next |= __shfl_down_sync(0xffffffff, next, 1) << 16;
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/LZ4Kernels.cuh:814: unsupported device function "__shfl_sync":             = __shfl_sync(0xffffffff, match_location, first_match_thread);
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/LZ4Kernels.cuh:844: unsupported device function "__shfl_sync":           match_location = __shfl_sync(0xffffffff, offset, first_match_thread);
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/SnappyBlockUtils.cuh:21: unsupported device function "__shfl_sync": #define SHFL0(v)        __shfl_sync(~0, v, 0)
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/SnappyBlockUtils.cuh:22: unsupported device function "__shfl_sync": #define SHFL(v, t)      __shfl_sync(~0, v, t)
+  warning: /ssd/cakunas/compression-experiments/hipify-output/nvcomp-hipified/src/SnappyBlockUtils.cuh:23: unsupported device function "__shfl_xor_sync": #define SHFL_XOR(v, m)  __shfl_xor_sync(~0, v, m)
