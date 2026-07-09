@@ -2,7 +2,7 @@
 # =============================================================================
 # Hipify nvcomp 2.2 → HIP and compare against:
 #   1) AMD's official hipCOMP-core (manual port by AMD)
-#   2) hip-compression-toolkit (our port)
+#   2) arcto (our port)
 #
 # This script:
 #   a) Copies nvcomp 2.2 source to a working directory
@@ -23,7 +23,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Source directories
 NVCOMP_SRC="/ssd/cakunas/devel/nvcomp"
 HIPCOMP_AMD="/ssd/cakunas/devel/hipCOMP-core"
-HIPCOMP_OURS="/ssd/cakunas/hip-compression-toolkit"
+ARCTO_OURS="/ssd/cakunas/arcto"
 
 # Output
 HIPIFIED_DIR="$PROJECT_ROOT/hipify-output/nvcomp-hipified"
@@ -165,7 +165,7 @@ Comparison of three conversion approaches for nvcomp 2.2 → HIP:
 
 1. **hipify-perl (automatic)**: Raw `hipify-perl` output from nvcomp 2.2 CUDA source
 2. **hipCOMP-core (AMD)**: AMD's official manual port
-3. **hip-compression-toolkit (our port)**: Our manual port with optimizations
+3. **arcto (our port)**: Our manual port with optimizations
 
 ## File-level comparison
 HEADER
@@ -207,14 +207,14 @@ for base in "${NVCOMP_KEY_FILES[@]}"; do
     fi
 
     # Find our version
-    # Map nvcomp names to our names (CudaUtils → HipUtils, nvcomp_api → hipcomp_api, etc.)
+    # Map nvcomp names to our names (CudaUtils → HipUtils, nvcomp_api → arcto_api, etc.)
     our_name="$fname"
     case "$fname" in
         CudaUtils) our_name="HipUtils" ;;
-        nvcomp_api) our_name="hipcomp_api" ;;
-        nvcomp_cub) our_name="hipcomp_hipcub" ;;
+        nvcomp_api) our_name="arcto_api" ;;
+        nvcomp_cub) our_name="arcto_hipcub" ;;
     esac
-    our_file=$(find "$HIPCOMP_OURS/src" -name "${our_name}.*" 2>/dev/null | head -1)
+    our_file=$(find "$ARCTO_OURS/src" -name "${our_name}.*" 2>/dev/null | head -1)
     our_status="--"
     if [ -n "$our_file" ]; then
         our_status="$(basename "$our_file")"
@@ -248,10 +248,10 @@ for base in "${NVCOMP_KEY_FILES[@]}"; do
     our_name="$fname"
     case "$fname" in
         CudaUtils) our_name="HipUtils" ;;
-        nvcomp_api) our_name="hipcomp_api" ;;
-        nvcomp_cub) our_name="hipcomp_hipcub" ;;
+        nvcomp_api) our_name="arcto_api" ;;
+        nvcomp_cub) our_name="arcto_hipcub" ;;
     esac
-    our_file=$(find "$HIPCOMP_OURS/src" -name "${our_name}.*" 2>/dev/null | head -1)
+    our_file=$(find "$ARCTO_OURS/src" -name "${our_name}.*" 2>/dev/null | head -1)
 
     diff_hipify_amd="--"
     diff_hipify_ours="--"
