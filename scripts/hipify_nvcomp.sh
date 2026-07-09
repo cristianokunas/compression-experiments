@@ -171,7 +171,7 @@ Comparison of three conversion approaches for nvcomp 2.2 → HIP:
 HEADER
 
 echo "" >> "$SUMMARY"
-echo "| File (nvcomp) | hipify-perl | hipCOMP-core (AMD) | hip-compression-toolkit |" >> "$SUMMARY"
+echo "| File (nvcomp) | hipify-perl | hipCOMP-core (AMD) | arcto |" >> "$SUMMARY"
 echo "|---|---|---|---|" >> "$SUMMARY"
 
 # Compare key source files
@@ -315,7 +315,7 @@ These are changes that `hipify-perl` **cannot** do automatically and require man
 - hipify-perl doesn't adjust shared memory patterns
 
 ### 5. Header/namespace renaming
-- `nvcomp` → `hipcomp` (namespace, headers, API symbols)
+- `nvcomp` → `arcto` (namespace, headers, API symbols)
 - hipify-perl does NOT rename project-specific symbols, only CUDA runtime APIs
 
 ### 6. CMakeLists.txt
