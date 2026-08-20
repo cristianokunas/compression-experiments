@@ -56,3 +56,9 @@ LDS que a proposta promete (E11), que passa a ser a próxima edição do laço.
   experimento controlado que fecha a atribuição.
 - **Próximos passos**: E11 e a fila de replay CDNA, com as predições já
   registradas antes da medição.
+- **Figura de fechamento**: a escada de progressão (`OPTIMIZATION-LOOP.md`,
+  seção 7): v1 é o baseline herdado, cada vN acumula a otimização mantida
+  seguinte, tudo medido em toda arquitetura, terminando no ganho total vN/v1
+  por GPU. Os degraus planos são informação: o conjunto wave32-only de E07
+  aparece plano na escada wave64, e é isso que mostra o método arbitrando por
+  arquitetura em vez de tirar média.

@@ -175,7 +175,46 @@ Available counters on gfx1100 that the loop uses: `OccupancyPercent`,
 
 ---
 
-## 7. Stop criteria
+## 7. After the loop: the progression ladder
+
+When a campaign closes, the kept attempts are retold as a cumulative ladder:
+v1 is the untouched baseline, v2 is v1 plus the first kept optimization, v3 is
+v2 plus the second, and so on to the last kept change. Every version is
+measured on **every architecture**, same runner, same inputs, same
+per-repetition protocol, and the final figure reports each step's marginal
+gain plus the total gain of vN over v1 per architecture.
+
+Why per architecture is the point, not a detail: several kept optimizations
+are deliberately arch-gated. E07's wave32-only set improves gfx1100 and would
+regress CDNA if generalized, so on the wave64 ladder that step shows **flat**,
+and the flat step is information, not failure — it is the visible proof that
+the methodology gates changes instead of averaging them. The total vN/v1 ratio
+per architecture is the honest headline number, and the per-step shape shows
+where each architecture's gain actually came from.
+
+Rules that keep the ladder honest:
+
+- **One lineage, not per-arch best paths.** The versions are the cumulative
+  kept commits in merge order, identical code for every architecture;
+  arch-gating happens inside the code, never by picking different commits per
+  GPU. Cherry-picking a per-arch sequence turns the figure into marketing.
+- **Each version is a commit hash**, so the ladder is rebuilt with
+  `git checkout <hash>` and the standard runner — this is the same replay
+  mechanism as §6, applied in sequence.
+- **The gate applies at every rung.** A version that fails correctness on any
+  architecture cannot appear on any ladder.
+- **Baseline v1 is the inherited state** (the nvCOMP-translated kernels before
+  the first kept attempt), because the thesis claim is about closing the gap
+  from the inherited port, not from an arbitrary point.
+- Report medians with IQR per rung, as everywhere else; the total gain is the
+  ratio of medians, not a product of rounded per-step ratios.
+
+This ladder is also the natural bridge to the manuscript: the earlier
+transfer-side work kept exactly such a progression file
+(`results_paper2_progression.csv`, since removed with that thread), and the
+kernel-side story should end with its own.
+
+## 8. Stop criteria
 
 Stop the campaign when any of these is true, and say which in the log:
 
@@ -187,7 +226,7 @@ Stop the campaign when any of these is true, and say which in the log:
 
 ---
 
-## 8. What the loop must not do
+## 9. What the loop must not do
 
 - **Do not let an agent commit.** The developer runs `git commit`, keeping
   sign-off and control. This is the practice the ROCm case study calls out
