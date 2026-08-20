@@ -533,3 +533,58 @@ found useful, 256 to 512 entries is 512 B to 1 KB, and the objection dissolves.
 
 **Revisit in the loop.** Requires the occupancy counter before and after, since
 LDS allocation is itself an occupancy limiter.
+
+---
+
+## E14 — Small table as the production default (O1)
+
+| Attempt | Commit | Verdict |
+|---|---|---|
+| O1 — wave-conditional default: 128 (wave32) / 64 (wave64) | `4a1dcfe` | **OPEN — measuring on 3 GPUs** |
+
+Lands E08/E09 as shipped behavior. Predictions: ~30.8 / ~63.9 / ~8.1 GB/s on
+gfx1100 / gfx90a / gfx906 for dense 64K-chunk input with no flags; ratio within
++0.0075 % in exact bytes; compress temp shrinks 128-256x.
+
+## E11 — LDS-resident table, attempt A8 (O2)
+
+| Attempt | Commit | Verdict |
+|---|---|---|
+| A8 — `-DARCTO_LZ4_LDS_TABLE=1`, table in scratchpad at O1 sizes | `4678ea4` | **OPEN — measuring on 3 GPUs** |
+
+Predictions: probes leave the per-CU vector cache (`TCP_TCC_READ_REQ` collapses
+toward a tableless baseline on CDNA); throughput at least at parity with the
+packed small table, gains concentrated where contention still costs at
+saturation. 128-256 B of LDS per wave; the occupancy objection is dead.
+
+## E15 — Runtime-derived table cap (O3)
+
+| Attempt | Commit | Verdict |
+|---|---|---|
+| O3 — `-DARCTO_LZ4_RUNTIME_TABLE=1` + MAX 16384: cap = L1/(concurrent waves) from device properties | `981e19c` | **OPEN — measuring on 3 GPUs** |
+
+Refined prediction (sharper than the commit text): **parity** with the fixed O1
+default on dense data in both regimes, since a larger allowed table is flat, not
+faster, at low concurrency on dense input; the potential *win* is ratio on
+match-rich data at small batches, observable in the gate bytes. The value
+claimed is the form: the cap computed from two device properties, no sweep.
+
+## E16 — wave32 VGPR-capped occupancy (O4)
+
+| Attempt | Commit | Verdict |
+|---|---|---|
+| O4a — `-DARCTO_LZ4_W32_MIN_WAVES=12` (VGPR ≤ 128) | `7495b65` | **OPEN — gfx1100** |
+| O4b — `-DARCTO_LZ4_W32_MIN_WAVES=16` (VGPR ≤ 96) | `7495b65` | **OPEN — gfx1100** |
+
+Basis: kernel-symbol table shows 136 arch VGPRs on gfx1100 (residency ~10/16
+waves per SIMD) against 64 on MI210 (already at its step) and 32 on MI50.
+Prediction: more resident waves on gfx1100 with small added footprint at O1
+sizes; spills are the counterweight, checked by the before/after VGPR counts.
+Wave64 rows built from this tip serve as tip-replication.
+
+## E06 revisit — small-input regime (O5, measurement only)
+
+Same builds, `--dup 16` (~17 MB, undersubscribed) on all three GPUs.
+Predictions: the knee shift already seen on MI210 reappears (large tables
+tolerable), O3 tracks it automatically, and O4's occupancy lift matters more
+here than at saturation.
