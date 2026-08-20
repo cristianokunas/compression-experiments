@@ -1,0 +1,8 @@
+date=2026-08-20T01:47:38-03:00
+host=lunaris
+rocm=7.2.3
+HIP_VISIBLE_DEVICES=0
+input=/ssd/cakunas/compression-experiments/testdata/large_TTI_1024.bin (719323136 bytes)
+reps=30
+baseline_commit=0cd2506
+a1_commit=b9671c5
