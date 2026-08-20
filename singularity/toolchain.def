@@ -1,0 +1,59 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+# ARCTO toolchain image -- toolchain ONLY, no project code.
+#
+# One image serves every GPU architecture: what used to make the old images
+# per-arch was the pre-built benchmarks baked into them, and the optimization
+# loop does not use baked binaries. Code arrives on the node as a git bundle,
+# is checked out at an exact commit, and is built INSIDE this image with the
+# pinned ROCm; see singularity/commit-sweep.sh and
+# experiments/OPTIMIZATION-LOOP.md.
+#
+# ROCm is pinned at 7.0.1, the version the thesis methodology declares. The
+# HIP userspace, hipcc, cmake and rocprofv3 all come from here, so a
+# measurement is reproducible regardless of what the host node carries; only
+# the kernel driver comes from the host.
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        git \
+        ca-certificates \
+        wget \
+        python3
+
+    # ROCm 7.0.1, pinned. --no-dkms: the kernel driver is the host's.
+    wget https://repo.radeon.com/amdgpu-install/7.0.1/ubuntu/noble/amdgpu-install_7.0.1.70001-1_all.deb
+    apt-get install -y ./amdgpu-install_7.0.1.70001-1_all.deb
+    rm -f ./amdgpu-install_7.0.1.70001-1_all.deb
+    apt-get update
+    amdgpu-install --usecase=rocm,hip --no-dkms -y
+
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+%environment
+    export ROCM_PATH=/opt/rocm
+    export HIP_PATH=/opt/rocm
+    export PATH=/opt/rocm/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/rocm/lib:$LD_LIBRARY_PATH
+
+%help
+    ARCTO toolchain container (ROCm 7.0.1 + hipcc + cmake + git + rocprofv3).
+    Carries NO project code. Build and run ARCTO inside it against a
+    bind-mounted checkout:
+
+        singularity exec --rocm -B $HOME toolchain.sif \
+            bash -c 'cd /path/to/arcto && cmake -S . -B build ... && cmake --build build'
+
+    The full campaign flow (node check, image build, commit sweep) is in
+    compression-experiments/singularity/README.md.
+
+%labels
+    Author cakunas
+    Purpose ARCTO optimization-loop toolchain
+    ROCm 7.0.1

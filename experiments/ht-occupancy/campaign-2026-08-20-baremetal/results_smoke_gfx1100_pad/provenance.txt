@@ -1,0 +1,9 @@
+date=2026-08-20T13:33:11-03:00
+host=lunaris
+gfx=gfx1100
+sif=/ssd/cakunas/arcto_gfx1100_v3.sif
+rocm=7.0.1
+source=/ssd/cakunas/tooling-test/loop3.bundle
+commits_file=/ssd/cakunas/tooling-test/commits-smoke.txt
+reps=5 chunk=65536 input=tests/data/tti_rsf_64x64x64_t050.bin dup=64
+HIP_VISIBLE_DEVICES=0

@@ -9,15 +9,9 @@ Este repositório é **separado da ferramenta** — contém toda a infraestrutur
 ```
 compression-experiments/
 ├── singularity/                    Ambiente de execução (container)
-│   ├── defhip_benchmark.def          Definição do container Singularity
-│   ├── build_singularity.sh          Script para gerar o .sif
-│   └── singularity_entrypoint.sh     Entrypoint do container
 ├── scripts/                        Orquestração e análise
 │   ├── run_benchmarks_auto.sh        Automação de benchmarks
-│   ├── run_singularity.sh            Wrapper de execução via container
 │   ├── portable_benchmark.sh         Benchmark cross-platform (AMD/NVIDIA)
-│   ├── deploy_benchmarks.sh          Deploy multi-cluster (PCAD, Grid5000)
-│   ├── build_for_arch.sh             Build nativo para uma arquitetura
 │   ├── generate_testdata.sh          Geração de dados de teste sintéticos
 │   ├── convert_rsf_to_binary.py      Conversão RSF → binário
 │   ├── prepare_rsf_testdata.sh       Wrapper de conversão RSF
@@ -41,10 +35,8 @@ compression-experiments/
 
 ```bash
 # RX 7900 XT
-./singularity/build_singularity.sh --arch gfx1100
 
 # MI300X
-./singularity/build_singularity.sh --arch gfx942
 ```
 
 ### 2. Executar benchmark completo
@@ -92,7 +84,6 @@ Veja o [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md) para detalhes completos.
 
 ## Relação com o HIP Compression Toolkit
 
-O `.sif` é **self-contained** — o `defhip_benchmark.def` faz `git clone` e compila o toolkit automaticamente durante o build da imagem. Não é necessário ter o código-fonte do toolkit localmente para executar experimentos.
 
 ```
 [arcto]        [compression-experiments]

@@ -1,0 +1,41 @@
+00-identity.txt                    rc=0   bash -c hostname; date -Is; uptime
+01-os.txt                          rc=0   bash -c uname -a; echo; cat /etc/os-release 2>/dev/null; echo; cat /proc/cmdline; echo; ldd --version 2>/dev/null | head -1
+10-lscpu.txt                       rc=0   lscpu
+11-cpu-model.txt                   rc=0   grep -m1 "model name" /proc/cpuinfo; grep -c ^processor /proc/cpuinfo
+12-cpu-freq.txt                    rc=0   echo "smt: $(cat /sys/devices/system/cpu/smt/control 2>/dev/null)";
+                          echo "boost: $(cat /sys/devices/system/cpu/cpufreq/boost 2>/dev/null) no_turbo: $(cat /sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null)";
+                          for p in /sys/devices/system/cpu/cpufreq/policy*; do
+                            [ -d "$p" ] || continue
+                            echo "$(basename $p): governor=$(cat $p/scaling_governor 2>/dev/null) cur=$(cat $p/scaling_cur_freq 2>/dev/null) min=$(cat $p/scaling_min_freq 2>/dev/null) max=$(cat $p/scaling_max_freq 2>/dev/null)"
+                          done | head -8; echo "(politicas: $(ls -d /sys/devices/system/cpu/cpufreq/policy* 2>/dev/null | wc -l))"
+13-vulnerabilities.txt             rc=0   grep -r . /sys/devices/system/cpu/vulnerabilities/ 2>/dev/null
+14-numa.txt                        rc=127 numactl --hardware
+15-topology.txt                    rc=0   command -v lstopo-no-graphics >/dev/null && lstopo-no-graphics --no-io || echo "hwloc/lstopo ausente"
+20-meminfo.txt                     rc=0   cat /proc/meminfo
+21-hugepages.txt                   rc=127 echo "thp: $(cat /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null)";
+                          echo "thp-defrag: $(cat /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null)";
+                          grep -i huge /proc/meminfo; swapon --show 2>/dev/null
+30-sysctl.txt                      rc=0   for k in kernel.perf_event_paranoid vm.swappiness kernel.numa_balancing vm.overcommit_memory; do echo "$k = $(sysctl -n $k 2>/dev/null)"; done
+31-ulimits.txt                     rc=0   ulimit -a
+32-env-relevante.txt               rc=0   env | grep -E "^(PATH|LD_LIBRARY_PATH|ROCM|ROCR|HSA|HIP|CUDA|OMP|GOMP|HCC|OAR|SLURM|SINGULARITY|APPTAINER)" | sort
+33-modules.txt                     rc=0   lsmod 2>/dev/null | grep -E "^(Module|amdgpu|nvidia|kfd)" 
+40-amdgpu-driver.txt               rc=0   modinfo amdgpu 2>/dev/null | grep -E "^(version|srcversion|vermagic)"; echo "ppfeaturemask: $(cat /sys/module/amdgpu/parameters/ppfeaturemask 2>/dev/null)"
+41-rocm-smi.txt                    rc=0   rocm-smi
+42-rocm-smi-all.txt                rc=0   rocm-smi --showallinfo
+43-rocminfo.txt                    rc=0   rocminfo 2>/dev/null | grep -E "Name:|Marketing|Compute Unit|Wavefront|Cache|BDFID|Max Clock|Pool Size|Uuid" 
+44-amd-smi.txt                     rc=0   command -v amd-smi >/dev/null && amd-smi static 2>&1 || echo "amd-smi ausente"
+45-rocm-in-sif.txt                 rc=0   '/usr/local/bin/singularity' exec --rocm '/ssd/cakunas/arcto_gfx1100_v3.sif' bash -c 'cat /opt/rocm/.info/version; hipcc --version 2>/dev/null | head -2; rocm-smi 2>/dev/null'
+46-rocminfo-in-sif.txt             rc=0   '/usr/local/bin/singularity' exec --rocm '/ssd/cakunas/arcto_gfx1100_v3.sif' bash -c 'rocminfo 2>/dev/null' | grep -E 'Name:|Compute Unit|Wavefront|Cache|Max Clock' | head -40
+60-pcie-gpus.txt                   rc=0   for d in /sys/bus/pci/devices/*; do
+  cls=$(cat $d/class 2>/dev/null)
+  case "$cls" in 0x0300*|0x0302*|0x1200*)
+    echo "== $(basename $d) $(cat $d/vendor 2>/dev/null)/$(cat $d/device 2>/dev/null)"
+    echo "  link atual: $(cat $d/current_link_speed 2>/dev/null) x$(cat $d/current_link_width 2>/dev/null)"
+    echo "  link max:   $(cat $d/max_link_speed 2>/dev/null) x$(cat $d/max_link_width 2>/dev/null)";;
+  esac; done
+61-lspci-gpu.txt                   rc=0   lspci 2>/dev/null | grep -iE "vga|display|3d|accel"
+70-results-fs.txt                  rc=0   df -hT '/ssd/cakunas/tooling-test/sweep_smoke'; echo; findmnt -T '/ssd/cakunas/tooling-test/sweep_smoke' 2>/dev/null
+71-lsblk.txt                       rc=0   lsblk -o NAME,MODEL,SIZE,ROTA,TYPE,FSTYPE,MOUNTPOINT
+72-blockdev.txt                    rc=0   for b in /sys/block/*/queue; do d=$(dirname $b); echo "$(basename $d): scheduler=$(cat $b/scheduler 2>/dev/null) rotational=$(cat $b/rotational 2>/dev/null) read_ahead_kb=$(cat $b/read_ahead_kb 2>/dev/null)"; done | grep -vE "loop|ram"
+80-toolchain.txt                   rc=1   for c in gcc g++ cmake git python3 singularity apptainer; do command -v $c >/dev/null && echo "$c: $($c --version 2>/dev/null | head -1)"; done
+81-cluster.txt                     rc=0   env | grep -E "^(OAR_|SLURM_)" | sort; echo; who 2>/dev/null | head -5

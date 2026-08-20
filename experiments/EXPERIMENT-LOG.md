@@ -307,6 +307,14 @@ Output bytes unchanged. On MI210, pad over the packed small tables is neutral
 (ht64 63.92 → 64.26; ht128 58.79 → 58.01): dense packing already decorrelates
 the channels, so the conflict layer does not bite the production layout there.
 
+**gfx1100 preliminary (smoke conditions).** The tooling smoke test doubled as
+the wave32 pad probe: ht128 vs ht128+pad32 at 65 MB input, 5 reps, measured
+0.93x — a slight regression rather than the predicted neutrality, under
+undersubscribed conditions (1040 chunks vs 2688 slots). Needs the standard
+protocol (513 MB, 30 reps) before a verdict; recorded in
+`results_smoke_gfx1100_pad/`, which also carries the first automatic
+node-snapshot.
+
 **What stays open.**
 
 - contig+pad **beating** real ht128 on gfx906 (8.20 vs 6.94) hints that even the

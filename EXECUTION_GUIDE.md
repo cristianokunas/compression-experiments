@@ -51,14 +51,9 @@ Responsável por **ambiente de execução**, Singularity, geração de dados, or
 ```
 hip-compression-experiments/
 ├── singularity/
-│   ├── defhip_benchmark.def        Definição do container (clona e builda o toolkit)
-│   ├── build_singularity.sh        Script para gerar o .sif
-│   └── singularity_entrypoint.sh   Entrypoint do container
 ├── scripts/
 │   ├── run_benchmarks_auto.sh      Automação de benchmarks (orchestração)
-│   ├── run_singularity.sh          Wrapper de execução via container
 │   ├── portable_benchmark.sh       Benchmark cross-platform (AMD/NVIDIA)
-│   ├── deploy_benchmarks.sh        Deploy multi-cluster (PCAD, Grid5000)
 │   ├── generate_testdata.sh        Geração de dados de teste sintéticos
 │   ├── convert_rsf_to_binary.py    Conversão RSF → binário
 │   ├── prepare_rsf_testdata.sh     Wrapper de conversão RSF
@@ -100,26 +95,22 @@ cd hip-compression-experiments
 
 singularity build --fakeroot \
   images/arcto_gfx1100.sif \
-  singularity/defhip_benchmark.def
 # O def file usa GPU_ARCH=gfx1100 como argumento
 ```
 
 Ou usando o script wrapper:
 ```bash
-./singularity/build_singularity.sh --arch gfx1100
 # Gera: images/arcto_gfx1100.sif (≈6 GB, self-contained)
 ```
 
 ### MI300X (gfx942)
 
 ```bash
-./singularity/build_singularity.sh --arch gfx942
 ```
 
 ### MI210/MI250 (gfx90a)
 
 ```bash
-./singularity/build_singularity.sh --arch gfx90a
 ```
 
 O `.sif` é portável — copie para qualquer máquina com ROCm + Singularity.
@@ -150,14 +141,12 @@ singularity run --rocm \
 
 Ou com o wrapper:
 ```bash
-./scripts/run_singularity.sh images/arcto_gfx1100.sif \
   /path/to/fletcher-io/original/run
 ```
 
 ### Com múltiplos chunk sizes (análise de throughput)
 
 ```bash
-./scripts/run_singularity.sh images/arcto_gfx1100.sif \
   /path/to/fletcher-io/original/run \
   -i 20 -p "65536 1048576 16777216"
 ```
@@ -165,7 +154,6 @@ Ou com o wrapper:
 ### Com mais iterações para maior precisão estatística
 
 ```bash
-./scripts/run_singularity.sh images/arcto_gfx1100.sif \
   /path/to/fletcher-io/original/run \
   -i 50 -w 5
 ```
@@ -203,7 +191,6 @@ singularity run --rocm \
 ## 4. Dry Run (validar setup sem executar)
 
 ```bash
-./scripts/run_singularity.sh images/arcto_gfx1100.sif \
   /path/to/fletcher-io/original/run --dry-run
 ```
 
@@ -268,9 +255,6 @@ results/
 
 | Plataforma | Arch | Imagem SIF | Comando |
 |---|---|---|---|
-| RX 7900 XT | `gfx1100` | `arcto_gfx1100.sif` | `./scripts/run_singularity.sh images/arcto_gfx1100.sif <rsf_dir>` |
-| MI300X | `gfx942` | `arcto_gfx942.sif` | `./scripts/run_singularity.sh images/arcto_gfx942.sif <rsf_dir>` |
-| MI210/250 | `gfx90a` | `arcto_gfx90a.sif` | `./scripts/run_singularity.sh images/arcto_gfx90a.sif <rsf_dir>` |
 
 Todos os comandos são executados **de dentro do repo `hip-compression-experiments/`**.
 
