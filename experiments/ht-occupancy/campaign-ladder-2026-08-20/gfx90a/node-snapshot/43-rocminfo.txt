@@ -1,0 +1,62 @@
+  Name:                    INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Uuid:                    CPU-XX                             
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Vendor Name:             CPU                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   4000                               
+  BDFID:                   0                                  
+  Compute Unit:            96                                 
+  Name:                    INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Uuid:                    CPU-XX                             
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Vendor Name:             CPU                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   4000                               
+  BDFID:                   0                                  
+  Compute Unit:            96                                 
+  Name:                    gfx90a                             
+  Uuid:                    GPU-8ef36215c7a2390a               
+  Marketing Name:          AMD Instinct MI210                 
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          128(0x80)                          
+  Max Clock Freq. (MHz):   1700                               
+  BDFID:                   16640                              
+  Compute Unit:            104                                
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-
+  Name:                    gfx90a                             
+  Uuid:                    GPU-20333228a2824b33               
+  Marketing Name:          AMD Instinct MI210                 
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          128(0x80)                          
+  Max Clock Freq. (MHz):   1700                               
+  BDFID:                   22528                              
+  Compute Unit:            104                                
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-
+  Name:                    gfx90a                             
+  Uuid:                    GPU-062dff57a3c81d65               
+  Marketing Name:          AMD Instinct MI210                 
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          128(0x80)                          
+  Max Clock Freq. (MHz):   1700                               
+  BDFID:                   50432                              
+  Compute Unit:            104                                
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-
+  Name:                    gfx90a                             
+  Uuid:                    GPU-7b5c44d5e2b3bd93               
+  Marketing Name:          AMD Instinct MI210                 
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          128(0x80)                          
+  Max Clock Freq. (MHz):   1700                               
+  BDFID:                   56320                              
+  Compute Unit:            104                                
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-

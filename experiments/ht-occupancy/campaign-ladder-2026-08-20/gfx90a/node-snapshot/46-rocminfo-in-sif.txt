@@ -1,0 +1,44 @@
+WARNING: While finding ROCm bind points: could not retrieve ld cache: exec: "/usr/sbin/ldconfig.real": stat /usr/sbin/ldconfig.real: no such file or directory
+WARNING: Could not find any nv files on this host!
+WARNING: Could not find any nv libraries on this host!
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+  Name:                    INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Vendor Name:             CPU                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   4000                               
+  Compute Unit:            96                                 
+  Name:                    INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Marketing Name:          INTEL(R) XEON(R) PLATINUM 8568Y+   
+  Vendor Name:             CPU                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   4000                               
+  Compute Unit:            96                                 
+  Name:                    gfx90a                             
+  Marketing Name:          AMD Instinct MI210                 
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          128(0x80)                          
+  Max Clock Freq. (MHz):   1700                               
+  Compute Unit:            104                                
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-
+  Name:                    gfx90a                             
+  Marketing Name:          AMD Instinct MI210                 
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          128(0x80)                          
+  Max Clock Freq. (MHz):   1700                               
+  Compute Unit:            104                                
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-
+  Name:                    gfx90a                             
+  Marketing Name:          AMD Instinct MI210                 
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          128(0x80)                          
+  Max Clock Freq. (MHz):   1700                               
+  Compute Unit:            104                                
+  Wavefront Size:          64(0x40)                           

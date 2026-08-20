@@ -600,3 +600,52 @@ Same builds, `--dup 16` (~17 MB, undersubscribed) on all three GPUs.
 Predictions: the knee shift already seen on MI210 reappears (large tables
 tolerable), O3 tracks it automatically, and O4's occupancy lift matters more
 here than at saturation.
+
+---
+
+## The full progression ladder v1→v10 (2026-08-20, `campaign-ladder-2026-08-20/`)
+
+Ten versions, one lineage, three GPUs, 30 reps each, dense TTI 513 MB at chunk
+64K, inside the 7.0.1 toolchain image. Historical rungs predate the per-rep
+instrumentation, so each rung is an **instrumentation overlay**: the library at
+exactly the rung's commit plus a cherry-pick of the benchmark patch `03381b5`
+(zero lineage commits touch `benchmarks/`, so the overlay is the same diff
+everywhere; cross-checked byte-identical against the first, aborted run). The
+first run's abort was the empty-results guard working: measurement infra missing
+is a failure, not a silent zero.
+
+Marginal gain per rung (x vs previous):
+
+| rung | what | gfx1100 | gfx90a | gfx906 |
+|---|---|---|---|---|
+| v1 | inherited baseline (GB/s) | 7.48 | 2.33 | 2.39 |
+| v2 | E01 launch bounds | 1.002 | 1.005 | 1.000 |
+| v3 | E02 `__restrict__` | **0.956** | 0.986 | 1.013 |
+| v4 | E03 guard (flat expected) | 1.001 | 1.004 | 1.000 |
+| v5 | E04 no warpMatchAny | **0.876** | 1.024 | 1.027 |
+| v6 | E05 VGPR pin (wave64) | 0.999 | 0.999 | **0.731** |
+| v7 | E07 claim table (wave64) | 1.003 | 1.025 | 1.003 |
+| v8 | E07 wave32 decomp set (flat expected) | 1.001 | 0.999 | 1.000 |
+| v9 | E14/O1 small-table default | **4.63** | **26.4** | **4.43** |
+| v10 | E11/O2 LDS table | **1.09** | **1.25** | **4.01** |
+| | **total v10/v1** | **4.25x** | **34.4x** | **13.55x** |
+
+**What the ladder was built to reveal, it revealed.** The expected flats are
+flat (v4, v8, and the wave64-gated rungs on gfx1100). And three July keeps turn
+out to carry per-architecture regressions no one had measured:
+
+- **E02 `__restrict__`**: −4.4 % on gfx1100, −1.4 % on gfx90a, +1.3 % on gfx906
+  — net negative; candidate for revert or investigation.
+- **E04 warpMatchAny removal**: +2.4/+2.7 % on wave64, **−12.4 % on gfx1100** —
+  candidate for wave-width gating.
+- **E05 VGPR pin**: helped its original target (MI300X), neutral on gfx90a,
+  **−26.9 % on gfx906** — candidate for gfx942-only gating.
+
+These three gatings are the natural next round; fixing them would lift the
+totals to roughly 5.1x / 35x / 18.6x. A second incidental finding: the campaign
+branch's knob scaffolding (A4/A5/A6 `tableSlot` indirection) costs ~16 % on
+gfx1100 in the global-table regime (o-campaign baseline 6.28 vs clean-lineage
+7.48), and nothing at the LDS operating point — the production lineage
+(`opt/integration-2026-08`) is knob-free.
+
+MI300X is the missing column; `mi300x-playbook.md` runs this exact bundle.

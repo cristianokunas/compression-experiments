@@ -1,0 +1,5 @@
+03:00.0 VGA compatible controller: Matrox Electronics Systems Ltd. Integrated Matrox G200eW3 Graphics Controller (rev 04)
+41:00.0 Display controller: Advanced Micro Devices, Inc. [AMD/ATI] Device 740f (rev 02)
+58:00.0 Display controller: Advanced Micro Devices, Inc. [AMD/ATI] Device 740f (rev 02)
+c5:00.0 Display controller: Advanced Micro Devices, Inc. [AMD/ATI] Device 740f (rev 02)
+dc:00.0 Display controller: Advanced Micro Devices, Inc. [AMD/ATI] Device 740f (rev 02)

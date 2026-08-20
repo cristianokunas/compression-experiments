@@ -1,0 +1,23 @@
+== vazao de compressao (mediana [Q1-Q3]) ==
+  1cea1b3                  2.39 GB/s  [2.39 - 2.39]  n=30
+  e9f7384                  2.39 GB/s  [2.39 - 2.39]  n=30  1.000x vs anterior
+  7e7b4f7                  2.42 GB/s  [2.42 - 2.42]  n=30  1.013x vs anterior
+  d2930e6                  2.42 GB/s  [2.42 - 2.42]  n=30  1.000x vs anterior
+  93ec50b                  2.49 GB/s  [2.49 - 2.49]  n=30  1.027x vs anterior
+  f44cde1                  1.82 GB/s  [1.82 - 1.82]  n=30  0.731x vs anterior
+  803fa06                  1.82 GB/s  [1.82 - 1.83]  n=30  1.003x vs anterior
+  5c2d5a4                  1.82 GB/s  [1.82 - 1.82]  n=30  1.000x vs anterior
+  4f8e898                  8.07 GB/s  [8.04 - 8.11]  n=30  4.426x vs anterior
+  062800d                 32.41 GB/s  [32.30 - 32.86]  n=30  4.014x vs anterior
+  ganho total 062800d / 1cea1b3: 13.55x
+
+== portao: bytes exatos por arquivo da escada ==
+  !! synth_binary_1mb             1cea1b3=18668170 e9f7384=18668170 7e7b4f7=18668170 d2930e6=18668170 93ec50b=18668170 f44cde1=18668170 803fa06=18668170 5c2d5a4=18668170 4f8e898=18677218 062800d=18677218
+     synth_random_1mb             1cea1b3=61056832 e9f7384=61056832 7e7b4f7=61056832 d2930e6=61056832 93ec50b=61056832 f44cde1=61056832 803fa06=61056832 5c2d5a4=61056832 4f8e898=61056832 062800d=61056832
+     synth_zeros_1mb              1cea1b3=247776 e9f7384=247776 7e7b4f7=247776 d2930e6=247776 93ec50b=247776 f44cde1=247776 803fa06=247776 5c2d5a4=247776 4f8e898=247776 062800d=247776
+  !! tti_64x64x64_mid             1cea1b3=61047262 e9f7384=61047262 7e7b4f7=61047262 d2930e6=61047262 93ec50b=61047146 f44cde1=61047146 803fa06=61047146 5c2d5a4=61047146 4f8e898=61056774 062800d=61056774
+     tti_rsf_64x64x64_t000        1cea1b3=247776 e9f7384=247776 7e7b4f7=247776 d2930e6=247776 93ec50b=247776 f44cde1=247776 803fa06=247776 5c2d5a4=247776 4f8e898=247776 062800d=247776
+  !! tti_rsf_64x64x64_t050        1cea1b3=61056658 e9f7384=61056658 7e7b4f7=61056658 d2930e6=61056658 93ec50b=61056658 f44cde1=61056658 803fa06=61056658 5c2d5a4=61056658 4f8e898=61056832 062800d=61056832
+
+('!!' = bytes mudaram entre commits: compare com a linha de base da
+ tentativa antes de aceitar; mudanca de razao e o sinal de falha silenciosa)
