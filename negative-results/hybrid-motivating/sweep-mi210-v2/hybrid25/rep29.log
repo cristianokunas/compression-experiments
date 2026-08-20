@@ -1,0 +1,10 @@
+HIP device: AMD Instinct MI210, block 32x16, kernel 2d
+backend=HIP kernel=2d grid=248x248x248 absorb=16 st=1000 frames=101
+propagate walltime (s) = 11.341433
+total time (s)         = 13.723676
+MSamples/s             = 1936
+VmHWM (kB)             = 1549484
+compression            = hybrid25, 9650700288 -> 4573446360 bytes, ratio 2.11x
+csv,HIP,2d,248,248,248,16,1000,11.341433,13.723676,1936,1549484
+hybrid summary: theta=0.25 frames lz4=35 zfp_acc=66
+rsf_bytes=4573447168

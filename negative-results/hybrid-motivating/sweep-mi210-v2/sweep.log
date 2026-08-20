@@ -1,0 +1,20 @@
+v2 start Wed Aug  5 09:53:18 PM CEST 2026
+21:53:37 mech lz4 rep1 done
+21:53:59 mech lz4 rep2 done
+21:54:15 mech zfp rep1 done
+21:54:31 mech zfp rep2 done
+21:54:48 mech hybrid75 rep1 done
+21:55:03 mech hybrid75 rep2 done
+MECHANISM_DONE
+22:05:04 sweep none x30 done
+22:15:16 sweep lz4 x30 done
+22:23:21 sweep zfp x30 done
+22:33:36 sweep hybrid0 x30 done
+22:42:08 sweep hybrid25 x30 done
+22:50:16 sweep hybrid50 x30 done
+22:58:19 sweep hybrid75 x30 done
+23:06:15 sweep hybrid90 x30 done
+23:14:18 sweep hybrid100 x30 done
+v2 end Wed Aug  5 11:14:18 PM CEST 2026
+SWEEP2_DONE
+decode_bench start Wed Aug  5 11:15:40 PM CEST 2026
