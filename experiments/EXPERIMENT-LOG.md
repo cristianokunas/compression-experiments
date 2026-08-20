@@ -355,6 +355,53 @@ the production default on GCN.
 **Replication note:** ht128 measured 6.94 on neowise-9 and 6.86 on neowise-10,
 different nodes, same protocol.
 
+**CDNA2 counter matrix (larochette-1, sudo-g5k, `results_pmc_matrix_mi210/`).**
+The per-CU L1 evidence E09 was missing, now measured directly on the
+architecture where the knee hit exactly. `TCP_TCC_READ_REQ` (L1 misses to L2),
+same input, identical `SQ_WAVES`:
+
+| build | L1→L2 reads | TCC_MISS (L2) | profiled kernel t |
+|---|---|---|---|
+| ht64 | 12.2 M | — | 5.98 ms/disp-set |
+| ht128 | 20.1 M | 4.39 M | 193 ms |
+| ht256 | 61.3 M | 4.40 M | 196 ms |
+| ht512 | 118.3 M | 4.47 M | 202 ms |
+| ht16384 | 315.4 M | **389.4 M** | 2515 ms |
+| contig128 | 20.1 M | 5.2 M | 199 ms |
+| spread128 | 158.2 M | 107.7 M | 1570 ms |
+
+Three readings:
+
+1. **L1 misses scale with table size**, 12 M to 315 M — the footprint layer
+   measured at the per-CU cache itself, not inferred from L2.
+2. **The knee moves with occupancy, exactly as the denominator says.** This
+   matrix ran at `-x 64` (about 10 concurrent waves per CU instead of 32), and
+   the model then predicts the knee at 16 KB / 10 ≈ 800 entries — and indeed
+   ht512 is still flat here (202 ms, L2 misses unchanged) while the production
+   run at full saturation put the cliff between 512 and 256. Same silicon, same
+   code, knee position tracking `L1 / concurrent_waves`. An unplanned second
+   confirmation with the denominator actually varied.
+3. **Conflicts are a contention phenomenon**: contig128 shows no penalty at low
+   concurrency (199 ms ≈ ht128) yet costs 2x at production saturation — the
+   serialization needs many waves hammering the aligned channels.
+
+## E13 — L1 set-aliasing of packed tables (gfx906)
+
+| Attempt | Commit | Verdict |
+|---|---|---|
+| A7 — stride sweep on real ht128, pads {0, 32, 8160, 16288} | `ca26a31` builds | **REFUTED, and the production question closed** |
+
+**Measurement** (`results_e13_mi50/`, 30 reps, 513 MB, plus TCC counters per
+stride): throughput 6.81 / 6.54 / 6.47 / 6.48 GB/s — packed (pad 0) is best,
+every pad slightly negative; and L2 accesses are **flat at ~143.5 M across all
+strides**, refuting the aliasing account (packing costs no extra L1 traffic).
+
+Production verdict for gfx906: the plain packed small table stands. The
+contig+pad 8.20 GB/s anomaly does **not** transfer to the real path
+(ht128 at the identical 32 KiB + 64 B stride gives 6.48) and remains open as a
+curiosity confined to the masked-hash instrumentation build; deprioritized, no
+production relevance.
+
 ---
 
 ## E10 — Per-chunk hash-table clear loop as the real cost
