@@ -192,29 +192,54 @@ Ratio cost verified in exact bytes across the compressibility ladder: worst case
 
 ## E09 — Cache-residency explanation for E08
 
-| | |
-|---|---|
-| Verdict | **SUPERSEDED** (refuted 2026-08-20) |
+| Attempt | Commit | Verdict |
+|---|---|---|
+| formula test on rescued cross-arch data | (analysis only) | wrongly called SUPERSEDED on 2026-08-20 |
+| re-validation via marginal gains | (analysis only) | **REOPENED — core prediction supported on 3/3 architectures** |
+| A4 — probe-footprint discriminator | `34e623e` | **OPEN — measuring on gfx1100** |
 
 **Hypothesis.** Each wave carries its own table, so the governing quantity is the
 aggregate footprint of concurrently resident waves against the per-CU vector
-cache, predicting an optimum at `table_bytes ≈ L1_bytes / waves_per_CU`.
+cache, predicting a knee at `table_bytes ≈ L1_bytes / waves_per_CU`.
 
-**Measurement.** Rescued cross-architecture data:
+**First reading (wrong).** The optimum never turned over on gfx1100 or gfx906 —
+throughput kept rising to the smallest size tested — and this was read as "no
+knee, therefore refuted". That treated the knee as a plateau. The observable a
+residency model actually predicts in a multi-level hierarchy is the collapse of
+the **marginal gain per halving**, not a hard flat.
 
-| GPU | predicted | measured | shape |
-|---|---|---|---|
-| gfx90a | 256 entries | **256** | sharp 4× step at 512 to 256 |
-| gfx1100 | 512 entries | **128** | monotone to the smallest size tested |
-| gfx906 | ~205 entries | **64** | monotone to the smallest size tested |
+**Re-validation (2026-08-20, prompted by the user).** Marginal gain per halving,
+chunk 64 KiB, dense TTI:
 
-**Post-mortem.** Two of three architectures never turn over. A residency argument
-predicts a knee, and there is none. The MI210 hit is the one point that fits, and
-its 4× step is too sharp for a smooth residency story anyway.
+| GPU | predicted knee | measured inflection |
+|---|---|---|
+| gfx1100 | 512 | gain **rises** to 1.49x/halving into 1024→512, then collapses to 1.11x and 1.09x. Exact. |
+| gfx90a (MI210) | 256 | accelerates into **3.89x** at 512→256. Exact — but 256 is the smallest size the sweep measured. |
+| gfx906 (MI50) | ~205 | peaks at 1.40x at 512→256, decays to 1.21x below. Prediction inside the interval. |
 
-**Revisit in the loop.** Do not discard entirely. MI210's step remains unexplained
-by E10 as well, and may be a residency effect operating on top of it. It is the
-sharpest open question in the campaign.
+The occupancy assumption in the denominator also holds here: these inputs
+oversubscribe the wave slots 3.5–4x (10,974 chunks vs 2,688 slots on gfx1100),
+unlike the wave-starved 100 MB MI300X case. Self-consistent.
+
+**Current state.** The core quantitative prediction locates the inflection on all
+three architectures. What the strict model does not explain, and remains open:
+
+1. the **sub-knee residual**, a real 9–20 % per halving below the knee on gfx1100
+   and gfx906;
+2. **MI210 below 256 entries was never measured** — "optimum at 256" is partly a
+   sweep-range artifact; ht128 and ht64 are missing there;
+3. no cache **hit rate** has ever been measured directly (PMC dead on gfx1100
+   bare metal; possible on CDNA).
+
+**Attempt A4** (`34e623e`) probes the sub-knee residual with no counters needed:
+table held at 16384 entries, hash masked to 128 logical slots in two geometries —
+`contig128` (stride 1, 4 touched cache lines per wave) and `spread128` (stride
+128, 128 touched lines across the full 32 KB). The logical slot function is
+identical in both, so collisions and output bytes must match real ht128 exactly
+(that identity is the gate). Line-residency predicts spread128 falls to roughly
+the ht4096 level (~10 GB/s, same 8 KB line footprint); the collision-age account
+predicts spread128 stays at the ht128 level (~30 GB/s). The separation is 3x, far
+above noise.
 
 ---
 
@@ -236,10 +261,9 @@ monotone cost is not the initialization stores.
 it is per position rather than per table entry: the probe load `hashTable[hashPos]`
 scatters over a working set proportional to the table, and a larger table retains
 older candidates that pass the null and window checks and then force a far
-`readWord(data + offset)` that misses. Both are locality effects across the whole
-cache hierarchy, which can produce a monotone curve with no single knee — the
-shape E09 was rejected for predicting wrongly at one level. E09's specific
-quantitative form stays refuted; its family returns in read-side form.
+`readWord(data + offset)` that misses. With E10 gone, E09 in read-side form is
+the lead hypothesis — and its re-validation (see E09) shows the marginal-gain
+inflection landing at the predicted knee on all three architectures.
 
 **Also settled in passing:** the byte-identical output between cleared and
 never-cleared builds means stale entries never survive validation on this data.
