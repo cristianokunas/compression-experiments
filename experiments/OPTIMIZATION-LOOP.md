@@ -65,19 +65,17 @@ git -C <arcto> checkout -b opt/<campaign-name>
 an attempt that has already been measured. The commit is the unit that gets
 replayed on another GPU, so it must build and run on its own.
 
-Commit message shape:
+The commit is made **before** measuring and carries only the hypothesis; the
+measurement and verdict go in the log, never as an amend:
 
 ```
 opt(<area>): <the one mechanism changed>
 
 Attempt <ID> in experiments/EXPERIMENT-LOG.md.
-
 Hypothesis: <what should move, which counter, which direction>.
-Measured on <arch>: <before> -> <after>, correctness <gate result>.
-Verdict: KEPT | REVERTED.
 ```
 
-A reverted attempt is committed too, then followed by a revert commit. Both stay.
+A reverted attempt keeps its commit, followed by a revert commit. Both stay.
 Deleting the attempt destroys the only reason the next person will not retry it.
 
 After measuring, write the log entry with the **short commit hash and the
