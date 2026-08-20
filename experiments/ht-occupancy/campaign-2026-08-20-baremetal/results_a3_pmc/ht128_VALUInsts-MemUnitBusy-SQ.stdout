@@ -1,0 +1,37 @@
+GPU Information:
+  Device:          Radeon RX 7900 XT
+  Compute Units:   42
+  Total Memory:    19.98 GB
+
+Compression:
+  Throughput:               31.21 GB/s
+  Effective Bandwidth:      30.04 GB/s
+  Total Time:               225.9 ms
+  Compression Time:         23.0 ms (10.2%)
+  Transfer Time:            202.8 ms (89.8%)
+  Compression Ratio:        1.04x
+  Space Saved:              27.02 MB (3.8%)
+
+Decompression:
+  Throughput:               185.57 GB/s
+  Total Time:               206.7 ms
+  Decompression Time:       3.9 ms (1.9%)
+  Transfer Time:            202.8 ms (98.1%)
+
+Chunk Statistics:
+  Number of Chunks:         10976
+  Chunk Size:               64 KB
+  Avg Time per Chunk:       0.002 ms
+  Chunks per Second:        476192
+
+Accumulated Statistics (3 iterations):
+  Total Data Processed:     2.16 GB -> 2.08 GB
+  Total Time:               0.07 s
+  Avg Compression Ratio:    1.04x
+  Throughput Range:         30.37 - 32.00 GB/s
+  Comp Throughput StdDev:   0.67 GB/s
+  Decomp Throughput StdDev: 2.72 GB/s
+  Comp Time StdDev:         0.495 ms
+  Decomp Time StdDev:       0.056 ms
+  Avg Throughput:           31.21 GB/s
+

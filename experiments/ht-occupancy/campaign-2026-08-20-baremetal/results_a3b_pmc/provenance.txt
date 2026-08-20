@@ -1,0 +1,3 @@
+date=2026-08-20T01:56:34-03:00
+builds=A2(b48397c, sem limpeza) ht128,ht16384
+input=/ssd/cakunas/compression-experiments/testdata/large_TTI_1024.bin

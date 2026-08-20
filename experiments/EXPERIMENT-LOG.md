@@ -245,12 +245,28 @@ quantitative form stays refuted; its family returns in read-side form.
 never-cleared builds means stale entries never survive validation on this data.
 Clearing is semantically unnecessary; it was never the bottleneck either.
 
-**Next attempt is a measurement, not an edit** (A3): profile baseline ht128
-against ht16384 with `GRBM_GUI_ACTIVE`, `GL2C_HIT`/`GL2C_MISS`, `MemUnitBusy`,
-`VALUInsts`, `SQ_WAVES` on the compress kernel. If probe locality dominates,
-`GL2C_MISS` per position scales with table size while `VALUInsts` stays flat. If
-failed-candidate validation dominates, `VALUInsts` and `MemUnitBusy` both rise
-with table size. The counters can tell these apart; throughput cannot.
+**A3 — the counter measurement (run 2026-08-20, `results_a3_pmc/` and
+`results_a3b_pmc/`).** Two facts landed and one wall was hit.
+
+- **The cost is kernel-internal, confirmed twice.** Compress-kernel time per call:
+  baseline 23.1 ms at ht128 vs 104.8 ms at ht16384 (4.53x, matching the 4.50x
+  throughput ratio); on the A2 no-clear builds, 95.65 ms vs 417.76 ms total
+  (4.37x). Not launch overhead, not transfers, and once more not the clear loop.
+- **One wave per chunk, confirmed by hardware count.** `SQ_WAVES` = 43,904 over
+  4 dispatches = 10,974 chunks x 4, exactly the 719 MB / 64 KiB decomposition.
+- **Platform wall: PMC value collection is non-functional on this node.** Every
+  block counter — `GL2C_HIT`/`GL2C_MISS` (and `_sum` variants), `SQ_INSTS_VALU`,
+  `SQ_WAVE_CYCLES`, `GRBM_GUI_ACTIVE`, `MemUnitBusy`, `VALUInsts` — returns zero
+  under `rocprofv3 --pmc` on gfx1100 bare metal at ROCm 7.2.3, across two counter
+  sets and both builds. Legacy `rocprof` aborts outright (SIGABRT). Only
+  dispatch-derived values (`SQ_WAVES`, kernel time) come through.
+
+**Consequence.** The discriminator between probe locality and failed-candidate
+validation cannot run on this node. It moves to the CDNA replay — MI210/MI300X
+expose `TCP_*` and demonstrably produced real PMC values in the May campaign
+(ROCm 7.0.1, Singularity) — which was the planned next stage anyway, and this is
+one more argument for the container re-measurement. Per the stop criteria, the
+gfx1100 pass ends here with the verdicts above.
 
 **A1 post-mortem.** The hypothesis that `isValidHash` re-validates everything was
 wrong in one specific way. Its window check is total only for entries written

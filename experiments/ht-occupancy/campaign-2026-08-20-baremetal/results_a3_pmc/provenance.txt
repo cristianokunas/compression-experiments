@@ -1,0 +1,5 @@
+date=2026-08-20T01:53:33-03:00
+host=lunaris
+rocm=7.2.3
+builds=baseline(0cd2506) ht128,ht16384
+input=/ssd/cakunas/compression-experiments/testdata/large_TTI_1024.bin

@@ -1,0 +1,21 @@
+W20260820 01:56:44.974001 140452374630272 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.106503 sec
+W20260820 01:56:44.979865 140452374630272 simple_timer.cpp:55] [rocprofv3] '/ssd/cakunas/campaign-htocc/arcto-a1/build_ht16384/bin/benchmark_lz4_chunked -f /ssd/cakunas/compression-experiments/testdata/large_TTI_1024.bin -p 65536 -w 1 -i 3 -g 0' ::     0.000000 sec
+W20260820 01:56:45.017887 140452374630272 tool.cpp:2422] HSA version 8.20.3 initialized (instance=0)
+W20260820 01:56:47.960743 140452374630272 simple_timer.cpp:55] [rocprofv3] '/ssd/cakunas/campaign-htocc/arcto-a1/build_ht16384/bin/benchmark_lz4_chunked -f /ssd/cakunas/compression-experiments/testdata/large_TTI_1024.bin -p 65536 -w 1 -i 3 -g 0' ::     2.980878 sec
+W20260820 01:56:48.112214 140452374630272 generateRocpd.cpp:582] writing SQL database for process 485794 on node 3370503282
+E20260820 01:56:48.112671 140452374630272 generateRocpd.cpp:605] Opened result file: /ssd/cakunas/campaign-htocc/results_a3b_pmc/ht16384_SQ_INSTS_VALU-SQ_WAVE_/prof_results.db (UUID=000001d1-53a4-73a4-9155-dfb2be6022b0)
+W20260820 01:56:48.194584 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_string             ::     0.008241 sec
+W20260820 01:56:48.195672 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_node          ::     0.001077 sec
+W20260820 01:56:48.196909 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_process       ::     0.001228 sec
+W20260820 01:56:48.201238 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_agent         ::     0.002239 sec
+W20260820 01:56:48.204385 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_pmc           ::     0.003137 sec
+W20260820 01:56:48.206249 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd kernel info        ::     0.001854 sec
+W20260820 01:56:48.206258 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_region             ::     0.000002 sec
+W20260820 01:56:48.210091 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_kernel_dispatch    ::     0.003828 sec
+W20260820 01:56:48.223525 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_pmc_event          ::     0.013424 sec
+W20260820 01:56:48.223534 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_memory_copy        ::     0.000000 sec
+W20260820 01:56:48.223538 140452374630272 simple_timer.cpp:55] SQLite3 generation :: rocpd_memory_allocate    ::     0.000001 sec
+W20260820 01:56:48.223616 140452374630272 simple_timer.cpp:55] SQLite3 generation :: SQL indexing             ::     0.000074 sec
+W20260820 01:56:48.223810 140452374630272 simple_timer.cpp:55] SQLite3 generation :: total                    ::     0.111596 sec
+W20260820 01:56:48.225837 140452374630272 simple_timer.cpp:55] [rocprofv3] output generation ::     0.264758 sec
+W20260820 01:56:48.225877 140452374630272 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.264806 sec
