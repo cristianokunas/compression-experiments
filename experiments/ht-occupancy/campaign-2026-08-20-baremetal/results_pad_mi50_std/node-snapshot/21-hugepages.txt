@@ -1,0 +1,11 @@
+thp: [always] madvise never
+thp-defrag: always defer defer+madvise [madvise] never
+AnonHugePages:     73728 kB
+ShmemHugePages:        0 kB
+FileHugePages:         0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB

@@ -315,14 +315,45 @@ protocol (513 MB, 30 reps) before a verdict; recorded in
 `results_smoke_gfx1100_pad/`, which also carries the first automatic
 node-snapshot.
 
-**What stays open.**
+**Counter confirmation (2026-08-20, neowise-10, sudo-g5k, GPU 1,
+`results_pmc_matrix_mi50/`).** The discovery that unlocked it: `sudo-g5k` on a
+std-env node collects real PMC values — no kadeploy needed — and the RDNA
+counter names were the wrong ones for GCN: on Vega the L2 block is `TCC_*`, not
+`GL2C_*` (`--list-avail` stays empty even as root; use known names). The matrix
+on six builds, identical work (`SQ_WAVES` = 3,120 in every one):
 
-- contig+pad **beating** real ht128 on gfx906 (8.20 vs 6.94) hints that even the
-  packed layout leaves something on the table on GCN; `ht128pad32` on MI50 was
-  not run before the reservation ended. Queued.
-- Direct hit-rate counters remain unmeasured: std-env nodes returned an empty
-  counter list from `rocprofv3 --list-avail` on both CDNA sessions. The counter
-  confirmation needs a kadeploy session with sudo, as in the May MI300X campaign.
+| build | TCC_HIT | TCC_MISS | miss | kernel t |
+|---|---|---|---|---|
+| ht128 (packed) | 132.2 M | 11.5 M | 8 % | 297 ms |
+| ht16384 | 128.2 M | **462.2 M** | 78 % | 1636 ms |
+| contig128 (aligned 32 KiB) | 66.9 M | 32.9 M | 33 % | **3073 ms** |
+| spread128 | 196.3 M | 168.9 M | 46 % | 1225 ms |
+| contig128+pad | 88.0 M | 12.1 M | 12 % | **245 ms** |
+| ht16384+pad | 128.4 M | 462.1 M | 78 % | 1628 ms |
+
+Both layers now have their **direct hardware signature**:
+
+- **Footprint** (E09): misses scale with table size, 11.5 M to 462 M (40x), and
+  time follows. The pad leaves the full table's counters untouched, a third
+  confirmation that the large-table cost is footprint alone.
+- **Conflict** (E12): contig128 has **14x fewer misses than ht16384 yet runs
+  1.9x slower** — misses cannot explain it; and one cache line of stride padding
+  makes it 12.5x faster at a similar access pattern. Serialization without
+  misses is exactly the predicted conflict signature, now measured.
+
+**Pad on production layouts, final:** standard protocol on gfx906 gives
+ht128+pad at 0.95x (6.54 vs 6.86 GB/s, `results_pad_mi50_std/`, first real use
+of `commit-sweep.sh`), gfx1100 smoke gave 0.93x, MI210 gave 1.00x. Verdict:
+**the pad is a mechanism probe, not an optimization** — not adopted.
+
+**Open nuance, quantified but unexplained:** contig+pad reaches the L2 *less*
+than packed ht128 (100 M vs 143.7 M accesses) and beats it (245 vs 297 ms;
+throughput 8.20 vs 6.94). Candidate: L1 set-aliasing between 256 B-packed
+tables. Worth one dedicated attempt if the packed small-table layout becomes
+the production default on GCN.
+
+**Replication note:** ht128 measured 6.94 on neowise-9 and 6.86 on neowise-10,
+different nodes, same protocol.
 
 ---
 

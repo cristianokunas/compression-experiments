@@ -145,8 +145,10 @@ needed** for measurement sessions; a copied image crosses sites over the
 backbone in seconds. Two caveats learned the hard way: a bundle does not carry
 submodules (`git submodule update --init third_party/zfp` after cloning — the
 nodes have outbound network), and `rocprofv3 --list-avail` returns an empty
-counter list on std-env nodes, so **PMC sessions still need kadeploy with
-sudo**, as in the May MI300X campaign. The lunaris bare-metal runs at ROCm
+counter list on std-env nodes even as root — but **`sudo-g5k` unlocks actual
+PMC collection there, no kadeploy needed** (validated on neowise-10): wrap the
+`singularity exec` in `sudo-g5k` and pass known counter names, which are
+per-family — `GL2C_*` on RDNA, `TCC_*` on GCN/Vega, `TCP_*` on CDNA. The lunaris bare-metal runs at ROCm
 7.2.3 remain valid as behaviour-scouting; anything adopted is re-measured in
 the container before it is written up, and toolchains are never mixed within
 one comparison.

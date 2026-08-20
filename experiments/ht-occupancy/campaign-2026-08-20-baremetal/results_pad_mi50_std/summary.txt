@@ -1,0 +1,21 @@
+== vazao de compressao (mediana [Q1-Q3]) ==
+  ca26a31                  6.86 GB/s  [6.81 - 6.90]  n=30
+  ca26a31_v2               6.54 GB/s  [6.53 - 6.56]  n=30  0.953x vs anterior
+  ganho total ca26a31_v2 / ca26a31: 0.95x
+
+== portao: bytes exatos por arquivo da escada ==
+     synth_binary_1mb             ca26a31=18669562 ca26a31_v2=18669562
+     synth_random_1mb             ca26a31=61056832 ca26a31_v2=61056832
+     synth_zeros_1mb              ca26a31=247776 ca26a31_v2=247776
+     tti_64x64x64_mid             ca26a31=61056484 ca26a31_v2=61056484
+     tti_rsf_64x64x64_t000        ca26a31=247776 ca26a31_v2=247776
+     tti_rsf_64x64x64_t050        ca26a31=61056832 ca26a31_v2=61056832
+     v2_synth_binary_1mb          ca26a31=18669562
+     v2_synth_random_1mb          ca26a31=61056832
+     v2_synth_zeros_1mb           ca26a31=247776
+     v2_tti_64x64x64_mid          ca26a31=61056484
+     v2_tti_rsf_64x64x64_t000     ca26a31=247776
+     v2_tti_rsf_64x64x64_t050     ca26a31=61056832
+
+('!!' = bytes mudaram entre commits: compare com a linha de base da
+ tentativa antes de aceitar; mudanca de razao e o sinal de falha silenciosa)

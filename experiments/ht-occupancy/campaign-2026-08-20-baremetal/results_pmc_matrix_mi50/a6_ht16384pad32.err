@@ -1,0 +1,24 @@
+WARNING: While finding ROCm bind points: could not retrieve ld cache: exec: "/usr/sbin/ldconfig.real": stat /usr/sbin/ldconfig.real: no such file or directory
+WARNING: Could not find any nv files on this host!
+WARNING: Could not find any nv libraries on this host!
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+W20260820 19:05:58.309926 140220016918400 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.158794 sec
+W20260820 19:05:58.310735 140220016918400 simple_timer.cpp:55] [rocprofv3] 'build_a6_ht16384pad32/bin/benchmark_lz4_chunked -f tests/data/tti_rsf_64x64x64_t050.bin -p 65536 -x 64 -w 1 -i 2 -g 0' ::     0.000000 sec
+W20260820 19:05:58.449066 140220016918400 tool.cpp:2158] HSA version 8.18.1 initialized (instance=0)
+W20260820 19:05:59.005771 140220016918400 simple_timer.cpp:55] [rocprofv3] 'build_a6_ht16384pad32/bin/benchmark_lz4_chunked -f tests/data/tti_rsf_64x64x64_t050.bin -p 65536 -x 64 -w 1 -i 2 -g 0' ::     0.695036 sec
+W20260820 19:05:59.045546 140220016918400 generateRocpd.cpp:580] writing SQL database for process 29531 on node 4151243474
+E20260820 19:05:59.048969 140220016918400 generateRocpd.cpp:603] Opened result file: /home/ckunas/pmc_matrix_mi50/db_a6_ht16384pad32/prof_results.db (UUID=00000247-d85a-785a-b599-a315e3cedf66)
+W20260820 19:05:59.252746 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_string             ::     0.014308 sec
+W20260820 19:05:59.256349 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_node          ::     0.003585 sec
+W20260820 19:05:59.260671 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_process       ::     0.004311 sec
+W20260820 19:05:59.275680 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_agent         ::     0.009366 sec
+W20260820 19:05:59.282116 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_info_pmc           ::     0.006426 sec
+W20260820 19:05:59.287842 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd kernel info        ::     0.005716 sec
+W20260820 19:05:59.287855 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_region             ::     0.000002 sec
+W20260820 19:05:59.304498 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_kernel_dispatch    ::     0.016636 sec
+W20260820 19:05:59.334837 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_pmc_event          ::     0.030315 sec
+W20260820 19:05:59.334857 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_memory_copy        ::     0.000000 sec
+W20260820 19:05:59.334861 140220016918400 simple_timer.cpp:55] SQLite3 generation :: rocpd_memory_allocate    ::     0.000000 sec
+W20260820 19:05:59.335186 140220016918400 simple_timer.cpp:55] SQLite3 generation :: SQL indexing             ::     0.000321 sec
+W20260820 19:05:59.336161 140220016918400 simple_timer.cpp:55] SQLite3 generation :: total                    ::     0.290616 sec
+W20260820 19:05:59.338675 140220016918400 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.332656 sec

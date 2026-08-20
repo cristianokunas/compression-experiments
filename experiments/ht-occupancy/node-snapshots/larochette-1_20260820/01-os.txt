@@ -1,0 +1,15 @@
+Linux larochette-1.luxembourg.grid5000.fr 5.10.0-38-amd64 #1 SMP Debian 5.10.249-1 (2026-02-10) x86_64 GNU/Linux
+
+PRETTY_NAME="Debian GNU/Linux 11 (bullseye)"
+NAME="Debian GNU/Linux"
+VERSION_ID="11"
+VERSION="11 (bullseye)"
+VERSION_CODENAME=bullseye
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+
+BOOT_IMAGE=/boot/vmlinuz-5.10.0-38-amd64 root=UUID=dc63dcfb-cc16-4e3d-b896-c35dbb45a4a7 ro console=tty0 console=ttyS0,115200 modprobe.blacklist=esp4,esp6,rxrpc,ipcomp4,ipcomp6 initcall_blacklist=algif_aead_init systemd.unified_cgroup_hierarchy=false systemd.legacy_systemd_cgroup_controller=true quiet
+
+ldd (Debian GLIBC 2.31-13+deb11u13) 2.31
