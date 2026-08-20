@@ -5,7 +5,6 @@
 # how much loss does the user pay for what compression ratio?
 #
 # Modes covered:
-#   reversible            (lossless reference)
 #   fixed_accuracy 1e-3   (production-safe sweet spot for RTM)
 #   fixed_accuracy 1e-4   (conservative)
 #   fixed_accuracy 1e-5
@@ -40,17 +39,10 @@ run_one() {
   local raw="$OUT/zfp_${mode}_${param}_${fname%.bin}.log"
 
   local r=""
-  if [ "$mode" = "reversible" ]; then
-    r=$(singularity exec --rocm -B /ssd/cakunas:/ssd/cakunas "$SIF" bash -c "
-      export LD_LIBRARY_PATH=/ssd/cakunas/arcto/build_canon/lib:\$LD_LIBRARY_PATH
-      $B -c -f $file -m reversible -3 $shape -i $iters -w $warmup 2>/dev/null
-    ")
-  else
-    r=$(singularity exec --rocm -B /ssd/cakunas:/ssd/cakunas "$SIF" bash -c "
+  r=$(singularity exec --rocm -B /ssd/cakunas:/ssd/cakunas "$SIF" bash -c "
       export LD_LIBRARY_PATH=/ssd/cakunas/arcto/build_canon/lib:\$LD_LIBRARY_PATH
       $B -c -f $file -m $mode -r $param -3 $shape -i $iters -w $warmup 2>/dev/null
     ")
-  fi
   echo "$r" > "$raw"
   local last=$(echo "$r" | tail -1)
   if [[ -z "$last" || "$last" == *Files* ]]; then
@@ -73,7 +65,6 @@ for size_tag in "medium_TTI_100.bin 448,448,130" "large_TTI_1024.bin 896,896,224
   fname=$1 shape=$2
   echo
   echo "=== $fname ==="
-  run_one reversible       0    "$fname" "$shape"
   run_one fixed_accuracy   1e-3 "$fname" "$shape"
   run_one fixed_accuracy   1e-4 "$fname" "$shape"
   run_one fixed_accuracy   1e-5 "$fname" "$shape"
