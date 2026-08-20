@@ -1,0 +1,5 @@
+date=2026-08-20T17:40:18+02:00
+host=larochette-5.luxembourg.grid5000.fr
+commit=28891dfd10d6c55f2ecb89b70147508309845b56
+sif=/home/ckunas/arcto_toolchain.sif rocm=7.0.1
+gpu=MI210 gfx90a wave64 L1=16KB

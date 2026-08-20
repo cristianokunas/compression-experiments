@@ -196,7 +196,9 @@ Ratio cost verified in exact bytes across the compressibility ladder: worst case
 |---|---|---|
 | formula test on rescued cross-arch data | (analysis only) | wrongly called SUPERSEDED on 2026-08-20 |
 | re-validation via marginal gains | (analysis only) | **REOPENED — core prediction supported on 3/3 architectures** |
-| A4 — probe-footprint discriminator | `34e623e` | **VALIDATED on gfx1100** (2026-08-20): line locality confirmed, collision account refuted |
+| A4 — probe-footprint discriminator | `34e623e` | **VALIDATED on gfx1100**: line locality confirmed, collision account refuted. **wave64 first run INVALIDATED** — the knobs hijacked the LDS claim-table hash (58-byte deviation caught by the gate) |
+| A5 — knobs moved to a table-only slot function | `28891df` | **VALIDATED**: byte-identity restored on wave64; medians unchanged, so the wave64 findings stand |
+| A4 clean replay on wave64 | `28891df` builds | **verdict is per-architecture** — see below |
 
 **Hypothesis.** Each wave carries its own table, so the governing quantity is the
 aggregate footprint of concurrently resident waves against the per-CU vector
@@ -253,6 +255,66 @@ line-count effect below it.
 
 The A4 knob stays on the campaign branch; it compiles to the original behavior
 exactly when the mask is 0, so it is instrumentation, not a code change to merge.
+
+**Wave64 replay (2026-08-20, MI50 `results_a5_mi50/`, MI210 `results_mi210_loop/`,
+container-first on std-env nodes, no kadeploy).** The touched-lines account does
+**not** transfer to wave64 as-is. With byte-identical output across all variants:
+
+| GPU | real ht128 | contig128 (4 lines, 32 KiB-aligned tables) | spread128 (128 lines) |
+|---|---|---|---|
+| gfx1100 (wave32) | 30.94 | 30.75 | 14.63 |
+| gfx90a MI210 | 58.79 | 28.52 | 3.26 |
+| gfx906 MI50 | 6.94 | **0.82** | 2.47 |
+
+On gfx906 contig is 8.5x slower than the identically-working packed ht128, and
+slower than the full table; on gfx90a it costs half. The per-wave touched set
+cannot explain this; the **global address layout across concurrent waves** can,
+and E12/A6 confirmed it. The mechanism therefore has two separable layers:
+**footprint/residency** (the L1/waves knee, dominant on wave32 and for large
+tables everywhere) and **channel/bank conflicts from power-of-two-aligned
+strides** (GCN/CDNA, dominant when probes concentrate on same-offset lines).
+
+**MI210 below 256, closed.** This lineage's full curve (30 reps, dense TTI
+513 MB, chunk 64K): 16384 → 2.43, 512 → 12.04, 256 → 45.96, 128 → 58.79,
+64 → **63.92 GB/s** (26x over inherited). The old "optimum at 256" was a
+sweep-range artifact, as suspected; marginal gains collapse right after the
+predicted knee (3.82x → 1.28x → 1.09x), the same post-knee tail shape as the
+other two architectures. Anchors replicate the old campaign (2.43≈2.40,
+45.96≈44.28) across lineages and across the container-first flow.
+
+---
+
+## E12 — Allocation-stride channel conflicts (A6)
+
+| Attempt | Commit | Verdict |
+|---|---|---|
+| A6 — `ARCTO_LZ4_TABLE_PAD_ENTRIES` stride-pad knob | `ca26a31` | **mechanism VALIDATED on gfx906; production-neutral on gfx90a small tables** |
+
+**Hypothesis.** On GCN/CDNA the contig128 anomaly is memory-channel or bank
+conflict: per-chunk tables sit at power-of-two-aligned strides, so thousands of
+concurrent waves hammer address-congruent lines. Padding the stride by one cache
+line (32 entries, 64 B) breaks the congruence without touching the table.
+
+**Measurement (MI50, `results_a6_mi50/`).** Both predictions registered before
+the run landed:
+
+| build | without pad | with pad |
+|---|---|---|
+| contig128 | 0.82 GB/s | **8.20** — a 10x jump, above real ht128 (6.94) |
+| ht16384 | 1.77 | 1.78 — nothing, the full-table cost is footprint |
+
+Output bytes unchanged. On MI210, pad over the packed small tables is neutral
+(ht64 63.92 → 64.26; ht128 58.79 → 58.01): dense packing already decorrelates
+the channels, so the conflict layer does not bite the production layout there.
+
+**What stays open.**
+
+- contig+pad **beating** real ht128 on gfx906 (8.20 vs 6.94) hints that even the
+  packed layout leaves something on the table on GCN; `ht128pad32` on MI50 was
+  not run before the reservation ended. Queued.
+- Direct hit-rate counters remain unmeasured: std-env nodes returned an empty
+  counter list from `rocprofv3 --list-avail` on both CDNA sessions. The counter
+  confirmation needs a kadeploy session with sudo, as in the May MI300X campaign.
 
 ---
 

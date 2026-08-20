@@ -1,0 +1,4 @@
+date=2026-08-20T17:41:19+02:00
+host=neowise-9.lyon.grid5000.fr
+commit=28891dfd10d6c55f2ecb89b70147508309845b56
+fix=A5 tableSlot

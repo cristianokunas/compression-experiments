@@ -135,10 +135,21 @@ that is not derived from the build will eventually lie.
 version, device, input file and its size, repetition count. The existing runners
 write `provenance.txt`; keep that.
 
-**Bare metal for now, by decision.** These runs use lunaris bare metal at ROCm
-7.2.3 in order to see the behaviour first. The methodology chapter declares ROCm
-7.0.1 inside the Singularity image, so **anything adopted is re-measured in the
-container before it is written up**. Do not mix toolchains within one comparison.
+**Container-first is the default** (validated 2026-08-20 on MI50 and MI210):
+one toolchain SIF (ROCm 7.0.1 + hipcc + cmake + git; the existing
+`arcto_gfx1100_v3.sif` serves — its arch-specific part was only the baked
+binaries, which the loop does not use), code shipped as a **git bundle** and
+cloned on the node, everything built and run inside the image. On Grid'5000 the
+std environment carries the amdgpu driver and singularity, so **no kadeploy is
+needed** for measurement sessions; a copied image crosses sites over the
+backbone in seconds. Two caveats learned the hard way: a bundle does not carry
+submodules (`git submodule update --init third_party/zfp` after cloning — the
+nodes have outbound network), and `rocprofv3 --list-avail` returns an empty
+counter list on std-env nodes, so **PMC sessions still need kadeploy with
+sudo**, as in the May MI300X campaign. The lunaris bare-metal runs at ROCm
+7.2.3 remain valid as behaviour-scouting; anything adopted is re-measured in
+the container before it is written up, and toolchains are never mixed within
+one comparison.
 
 ---
 

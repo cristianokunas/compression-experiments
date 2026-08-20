@@ -1,0 +1,6 @@
+date=2026-08-20T17:25:51+02:00
+host=neowise-9.lyon.grid5000.fr
+commit=34e623e7379bdac2152589f8835c7b8242dcd21c
+sif=/home/ckunas/arcto_gfx906.sif (ROCm 7.0.1)
+gpu=MI50 gfx906 wave64 L1=16KB 40w/CU
+HIP_VISIBLE_DEVICES=0
