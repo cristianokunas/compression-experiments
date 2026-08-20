@@ -197,6 +197,51 @@ BENCHMARK_DIR=$(find_benchmarks) || {
     exit 1
 }
 
+# -------------------- Identify the ARCTO build --------------------
+# Campaign CSVs used to record only benchmark_dir, which is a path and not a
+# version: given a results file there was no way to tell which ARCTO build
+# produced it. Resolve the actual commit so metadata.json pins the tool.
+#
+# Resolution order:
+#   1. $ARCTO_COMMIT / $ARCTO_DESCRIBE  -- set explicitly, or baked into a
+#      container image at build time (inside a SIF there is no git tree).
+#   2. $ARCTO_SRC, if it points at a git work tree.
+#   3. walk up from BENCHMARK_DIR looking for a repository (covers the usual
+#      <repo>/build*/bin layout).
+# Anything unresolved is recorded as "unknown" rather than silently omitted,
+# so a run that cannot be attributed says so.
+resolve_arcto_version() {
+    local dir candidate
+
+    if [ -n "${ARCTO_COMMIT:-}" ]; then
+        ARCTO_COMMIT_RESOLVED="$ARCTO_COMMIT"
+        ARCTO_DESCRIBE_RESOLVED="${ARCTO_DESCRIBE:-$ARCTO_COMMIT}"
+        return 0
+    fi
+
+    for candidate in "${ARCTO_SRC:-}" "$BENCHMARK_DIR"; do
+        [ -n "$candidate" ] || continue
+        dir=$(cd "$candidate" 2>/dev/null && pwd) || continue
+        while [ "$dir" != "/" ]; do
+            if [ -e "$dir/.git" ]; then
+                ARCTO_COMMIT_RESOLVED=$(git -C "$dir" rev-parse HEAD 2>/dev/null) || break
+                # --tags so the paper/* and archive/* tags are eligible; the
+                # useful output is like paper/arcto-optim-validated-3-gabc1234,
+                # i.e. which frozen paper state this run descends from.
+                ARCTO_DESCRIBE_RESOLVED=$(git -C "$dir" describe --tags --always --dirty 2>/dev/null)
+                return 0
+            fi
+            dir=$(dirname "$dir")
+        done
+    done
+
+    ARCTO_COMMIT_RESOLVED="unknown"
+    ARCTO_DESCRIBE_RESOLVED="unknown"
+    return 0
+}
+
+resolve_arcto_version
+
 # -------------------- Validate --------------------
 for algo in $ALGORITHMS; do
     exe="$BENCHMARK_DIR/benchmark_${algo}_chunked"
@@ -269,7 +314,9 @@ cat > "$EXPERIMENT_DIR/metadata.json" << EOF
     "testdata_dir": "$TESTDATA_DIR",
     "rsf_start_fraction": $RSF_START_FRACTION,
     "hostname": "$(hostname)",
-    "benchmark_dir": "$BENCHMARK_DIR"
+    "benchmark_dir": "$BENCHMARK_DIR",
+    "arcto_commit": "$ARCTO_COMMIT_RESOLVED",
+    "arcto_describe": "$ARCTO_DESCRIBE_RESOLVED"
 }
 EOF
 
