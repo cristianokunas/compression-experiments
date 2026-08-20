@@ -1,0 +1,4 @@
+date=2026-08-20T02:15:04-03:00
+commit=34e623e
+input=/ssd/cakunas/compression-experiments/testdata/large_TTI_1024.bin
+reps=30

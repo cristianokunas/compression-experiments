@@ -196,7 +196,7 @@ Ratio cost verified in exact bytes across the compressibility ladder: worst case
 |---|---|---|
 | formula test on rescued cross-arch data | (analysis only) | wrongly called SUPERSEDED on 2026-08-20 |
 | re-validation via marginal gains | (analysis only) | **REOPENED — core prediction supported on 3/3 architectures** |
-| A4 — probe-footprint discriminator | `34e623e` | **OPEN — measuring on gfx1100** |
+| A4 — probe-footprint discriminator | `34e623e` | **VALIDATED on gfx1100** (2026-08-20): line locality confirmed, collision account refuted |
 
 **Hypothesis.** Each wave carries its own table, so the governing quantity is the
 aggregate footprint of concurrently resident waves against the per-CU vector
@@ -231,15 +231,28 @@ three architectures. What the strict model does not explain, and remains open:
 3. no cache **hit rate** has ever been measured directly (PMC dead on gfx1100
    bare metal; possible on CDNA).
 
-**Attempt A4** (`34e623e`) probes the sub-knee residual with no counters needed:
-table held at 16384 entries, hash masked to 128 logical slots in two geometries —
-`contig128` (stride 1, 4 touched cache lines per wave) and `spread128` (stride
-128, 128 touched lines across the full 32 KB). The logical slot function is
-identical in both, so collisions and output bytes must match real ht128 exactly
-(that identity is the gate). Line-residency predicts spread128 falls to roughly
-the ht4096 level (~10 GB/s, same 8 KB line footprint); the collision-age account
-predicts spread128 stays at the ht128 level (~30 GB/s). The separation is 3x, far
-above noise.
+**Attempt A4 result** (`34e623e`, `results_a4/`, 30 reps). The gate passed
+perfectly: contig128, spread128 and real ht128 emit **byte-identical output** on
+all six ladder files, so the three builds do identical algorithmic work and only
+the memory layout of the probes differs. Throughput:
+
+| variant | touched lines/wave | median |
+|---|---|---|
+| contig128 (allocated 16384) | 4 | **30.75 GB/s** ≈ real ht128 (30.94) |
+| spread128 (allocated 16384) | 128 | **14.63 GB/s** |
+
+The collision-age account predicted spread ≈ contig and is **refuted**: a 2.1x
+gap with byte-identical work. The line-residency account predicted the 8 KB-line
+footprint range and is **confirmed**: 14.63 lands between ht2048 (12.74) and
+ht1024 (17.16). And contig ≈ real ht128 shows the **allocated** size is
+irrelevant — the **touched** line set is the governing quantity, above and below
+the knee. Together with the inflection match on 3/3 architectures, E09 now
+stands as: probe cache-line footprint per wave against the per-CU cache governs
+LZ4 compress throughput on this data, with the knee at L1/waves and a smooth
+line-count effect below it.
+
+The A4 knob stays on the campaign branch; it compiles to the original behavior
+exactly when the mask is 0, so it is instrumentation, not a code change to merge.
 
 ---
 
@@ -358,11 +371,13 @@ which shows up as ratio and not as a crash.
 today; LDS is the software-managed scratchpad and is far cheaper both to clear and
 to probe.
 
-**Interaction to record.** If E10 holds, moving to LDS also removes most of the
-clear cost, because clearing in LDS is orders of magnitude cheaper than in global
-memory. The promised redesign and E10 converge on the same fix for a reason the
-proposal did not know. Measure them separately before combining, or the credit
-cannot be assigned.
+**Interaction to record.** E09's validation is the quantitative motivation this
+redesign was missing: A4 showed a 2.1x swing from probe-line layout alone, at
+byte-identical output, and the knee sits at L1/waves on all three architectures.
+An LDS-resident table takes the probes out of the contended vector cache
+entirely — the mechanism E09 measured is exactly the one LDS removes. At the
+useful sizes from E08 (256–512 entries, 512 B–1 KB) the old occupancy objection
+is gone.
 
 **Feasibility.** At the inherited 16384 entries of `uint16_t` the table is 32 KB
 per chunk, which is why occupancy was the standing objection. At the sizes E08
