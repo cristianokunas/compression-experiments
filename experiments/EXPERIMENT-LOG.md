@@ -222,7 +222,16 @@ sharpest open question in the campaign.
 
 | | |
 |---|---|
-| Verdict | **OPEN** |
+| Attempt A1 | `b9671c5` on `opt/lz4-compress-2026-08` — clear loop removed outright, no generation tag |
+| Verdict | **OPEN — A1 measuring on gfx1100** |
+
+**Why A1 needs no generation tag.** Reading the code showed the tag is
+unnecessary: every reader already goes through `isValidHash`, which rejects a
+stale entry via the `NULL_OFFSET` check, the `MAX_OFFSET` window check, and a
+byte-level comparison against the actual data at the decoded offset. A leftover
+entry can only propose a match that is then verified against the current chunk's
+own bytes. The insert path's own comment says races are tolerated for exactly
+this reason. So the simplest possible edit — delete the loop — is the experiment.
 
 **Hypothesis.** `LZ4Kernels.hiph:941` opens `compressStream` with
 
