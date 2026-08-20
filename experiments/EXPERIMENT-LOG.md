@@ -223,7 +223,34 @@ sharpest open question in the campaign.
 | Attempt | Commit | Verdict |
 |---|---|---|
 | A1 — clear loop removed outright | `b9671c5` | **FAILED THE GATE** on gfx1100: illegal memory access, refined into A2 |
-| A2 — A1 plus a stale-entry guard in `isValidHash` | `b48397c` | **OPEN — measuring on gfx1100** |
+| A2 — A1 plus a stale-entry guard in `isValidHash` | `b48397c` | **REVERTED** on gfx1100 (`422ec6f`): gate passed, gain 1.00x |
+
+**E10 verdict: REFUTED on gfx1100** (2026-08-20, 30 reps, TTI 719 MB, both chunk
+sizes, `results_a2_ab/`). With the clear loop gone: ht16384 6.84 GB/s against a
+6.87 baseline; ht128 30.08 against 30.94. Ratio byte-identical across the ladder
+and round-trip bit-exact, so the removal is *sound* — it just does not pay. And
+table size still governs with no clearing on either side (6.84 vs 30.08), so the
+monotone cost is not the initialization stores.
+
+**What survives the refutation.** The cost must live on the **read path**, where
+it is per position rather than per table entry: the probe load `hashTable[hashPos]`
+scatters over a working set proportional to the table, and a larger table retains
+older candidates that pass the null and window checks and then force a far
+`readWord(data + offset)` that misses. Both are locality effects across the whole
+cache hierarchy, which can produce a monotone curve with no single knee — the
+shape E09 was rejected for predicting wrongly at one level. E09's specific
+quantitative form stays refuted; its family returns in read-side form.
+
+**Also settled in passing:** the byte-identical output between cleared and
+never-cleared builds means stale entries never survive validation on this data.
+Clearing is semantically unnecessary; it was never the bottleneck either.
+
+**Next attempt is a measurement, not an edit** (A3): profile baseline ht128
+against ht16384 with `GRBM_GUI_ACTIVE`, `GL2C_HIT`/`GL2C_MISS`, `MemUnitBusy`,
+`VALUInsts`, `SQ_WAVES` on the compress kernel. If probe locality dominates,
+`GL2C_MISS` per position scales with table size while `VALUInsts` stays flat. If
+failed-candidate validation dominates, `VALUInsts` and `MemUnitBusy` both rise
+with table size. The counters can tell these apart; throughput cannot.
 
 **A1 post-mortem.** The hypothesis that `isValidHash` re-validates everything was
 wrong in one specific way. Its window check is total only for entries written
