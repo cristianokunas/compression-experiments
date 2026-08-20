@@ -5,8 +5,8 @@ From: ubuntu:24.04
     # GPU architecture: gfx942 (MI300X), gfx90a (MI210), gfx906 (MI50), gfx1100 (RX 7900 XT)
     GPU_ARCH=gfx942
     # Git branch to build from. feature/zfp-canonical carries the ZFP
-    # integration (canonical-wrap + GPU-native ZFP-Reversible3D); change to
-    # main / devel once that work lands there.
+    # canonical-wrap integration; change to main / devel once that work
+    # lands there.
     BRANCH=feature/zfp-canonical
 
 %post
