@@ -32,6 +32,16 @@ results/
 !paper/**/results/
 !paper/**/results/**
 
+# Campaign output under experiments/ IS tracked. This repository is the
+# centralizer for campaign work: sweeps and profiling runs land here first and
+# move into a paper repository only if they end up in the paper. Without these
+# re-includes the blanket results/ rule above silently swallowed them, which is
+# why campaign data used to survive only inside paper/ or on a cluster node.
+!experiments/**/results/
+!experiments/**/results/**
+!experiments/**/results-*/
+!experiments/**/results-*/**
+
 # R session state -- never tracked.
 *.RData
 *.Rhistory

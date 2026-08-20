@@ -1,0 +1,6 @@
+date=2026-08-19T23:57:24+02:00
+host=neowise-1
+git=61218f5bc9caddd97114a428023cc0bc9302b268
+gpu=MI50 gfx906 GCN/Vega20 wave64 L1=16KB 60CU 40waves/CU
+rocm=/opt/rocm-7.0.1
+protocolo=-x 512 (527MB), chunk 64K, 3 reps

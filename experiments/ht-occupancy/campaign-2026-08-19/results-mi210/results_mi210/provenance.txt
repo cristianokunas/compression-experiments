@@ -1,0 +1,5 @@
+date=2026-08-19T23:18:11+02:00
+host=larochette-2
+git=61218f5bc9caddd97114a428023cc0bc9302b268
+rocm=/opt/rocm-7.0.1
+gpu=MI210 gfx90a wave64 L1=16KB

@@ -1,0 +1,8 @@
+date=2026-08-19T17:53:43-03:00
+host=lunaris
+git=61218f5bc9caddd97114a428023cc0bc9302b268
+dirty= M src/LZ4Kernels.hiph;?? build_ht.sh;?? build_ht1024.build.log;?? build_ht1024.configure.log;?? build_ht128.build.log;?? build_ht128.configure.log;?? build_ht16384.build.log;?? build_ht16384.configure.log;?? build_ht2048.build.log;?? build_ht2048.configure.log;?? build_ht256.build.log;?? build_ht256.configure.log;?? build_ht4096.build.log;?? build_ht4096.configure.log;?? build_ht512.build.log;?? build_ht512.configure.log;?? build_ht8192.build.log;?? build_ht8192.configure.log;?? build_ht_small.sh;?? results_htsweep/;?? results_ratio/;?? run_ht.sh;?? run_ratio.sh;
+rocm=/opt/rocm-7.2.3
+HIP_VISIBLE_DEVICES=0
+input=testdata/large_TTI_1024.bin (719323136 bytes)
+reps=5 chunks=8192 65536 hts=1024 512 256 128
