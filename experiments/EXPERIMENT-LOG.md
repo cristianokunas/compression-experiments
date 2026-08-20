@@ -220,10 +220,25 @@ sharpest open question in the campaign.
 
 ## E10 — Per-chunk hash-table clear loop as the real cost
 
-| | |
-|---|---|
-| Attempt A1 | `b9671c5` on `opt/lz4-compress-2026-08` — clear loop removed outright, no generation tag |
-| Verdict | **OPEN — A1 measuring on gfx1100** |
+| Attempt | Commit | Verdict |
+|---|---|---|
+| A1 — clear loop removed outright | `b9671c5` | **FAILED THE GATE** on gfx1100: illegal memory access, refined into A2 |
+| A2 — A1 plus a stale-entry guard in `isValidHash` | `b48397c` | **OPEN — measuring on gfx1100** |
+
+**A1 post-mortem.** The hypothesis that `isValidHash` re-validates everything was
+wrong in one specific way. Its window check is total only for entries written
+within the current chunk. In the first `OFFSET_SIZE` window, a stale entry at or
+ahead of the current position underflows `convertIdx` — the `assert(offset <= pos)`
+that would catch it is compiled out in Release — and the wrapped offset slips past
+the `MAX_OFFSET` window check (pos 100, stale entry 200: `decomp_idx - offset`
+comes out 65436, inside the window) and is dereferenced at a wild address. The
+clear loop was not just a performance artifact; it was silently upholding an
+invariant the validation depends on.
+
+**A2.** One guard before `convertIdx`: in the first window, reject any entry at or
+ahead of the current position. Legitimate entries there always sit strictly
+behind it, so nothing valid is lost, and every throughput and ratio prediction
+from A1 carries over unchanged.
 
 **Why A1 needs no generation tag.** Reading the code showed the tag is
 unnecessary: every reader already goes through `isValidHash`, which rejects a
