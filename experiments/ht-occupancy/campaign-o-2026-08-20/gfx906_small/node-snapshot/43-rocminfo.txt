@@ -1,0 +1,97 @@
+  Name:                    AMD EPYC 7642 48-Core Processor    
+  Uuid:                    CPU-XX                             
+  Marketing Name:          AMD EPYC 7642 48-Core Processor    
+  Vendor Name:             CPU                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   3312                               
+  BDFID:                   0                                  
+  Compute Unit:            96                                 
+  Name:                    gfx906                             
+  Uuid:                    GPU-3cc810e173497dfb               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   50432                              
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+  Name:                    gfx906                             
+  Uuid:                    GPU-3cc628a173497dfb               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   51200                              
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+  Name:                    gfx906                             
+  Uuid:                    GPU-77a040a173497dd4               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   35328                              
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+  Name:                    gfx906                             
+  Uuid:                    GPU-0cd2614172e62127               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   36096                              
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+  Name:                    gfx906                             
+  Uuid:                    GPU-f8a610e172e62691               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   1536                               
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+  Name:                    gfx906                             
+  Uuid:                    GPU-77aa696173497dd4               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   2304                               
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+  Name:                    gfx906                             
+  Uuid:                    GPU-77a0812173497dd4               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   17664                              
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+  Name:                    gfx906                             
+  Uuid:                    GPU-7784296173497dd4               
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  BDFID:                   18432                              
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-

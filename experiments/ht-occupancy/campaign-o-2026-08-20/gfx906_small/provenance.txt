@@ -1,0 +1,9 @@
+date=2026-08-20T20:12:23+02:00
+host=neowise-10.lyon.grid5000.fr
+gfx=gfx906
+sif=/home/ckunas/arcto_gfx906.sif
+rocm=7.0.1
+source=/home/ckunas/loop5.bundle
+commits_file=/home/ckunas/commits-o.txt
+reps=10 chunk=65536 input=tests/data/tti_rsf_64x64x64_t050.bin dup=16
+HIP_VISIBLE_DEVICES=0

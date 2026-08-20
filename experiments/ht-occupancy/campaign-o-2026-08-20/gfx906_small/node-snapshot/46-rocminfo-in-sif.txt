@@ -1,0 +1,44 @@
+WARNING: While finding ROCm bind points: could not retrieve ld cache: exec: "/usr/sbin/ldconfig.real": stat /usr/sbin/ldconfig.real: no such file or directory
+WARNING: Could not find any nv files on this host!
+WARNING: Could not find any nv libraries on this host!
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+  Name:                    AMD EPYC 7642 48-Core Processor    
+  Marketing Name:          AMD EPYC 7642 48-Core Processor    
+  Vendor Name:             CPU                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   3312                               
+  Compute Unit:            96                                 
+  Name:                    gfx906                             
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+      Name:                    amdgcn-amd-amdhsa--gfx9-generic:xnack-
+  Name:                    gfx906                             
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+      Name:                    amdgcn-amd-amdhsa--gfx9-generic:xnack-
+  Name:                    gfx906                             
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   1725                               
+  Compute Unit:            60                                 
+  Wavefront Size:          64(0x40)                           
+      Name:                    amdgcn-amd-amdhsa--gfx906:sramecc+:xnack-
+      Name:                    amdgcn-amd-amdhsa--gfx9-generic:xnack-
+  Name:                    gfx906                             
+  Marketing Name:          AMD Instinct MI50/MI60             
+  Vendor Name:             AMD                                

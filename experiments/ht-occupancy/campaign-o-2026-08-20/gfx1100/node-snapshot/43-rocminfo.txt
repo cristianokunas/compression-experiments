@@ -1,0 +1,33 @@
+  Name:                    AMD Ryzen Threadripper PRO 5965WX 24-Cores
+  Uuid:                    CPU-XX                             
+  Marketing Name:          AMD Ryzen Threadripper PRO 5965WX 24-Cores
+  Vendor Name:             CPU                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   3800                               
+  BDFID:                   0                                  
+  Compute Unit:            48                                 
+  Name:                    gfx1100                            
+  Uuid:                    GPU-21556f108e5669a9               
+  Marketing Name:          Radeon RX 7900 XT                  
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   2129                               
+  BDFID:                   17152                              
+  Compute Unit:            84                                 
+  Wavefront Size:          32(0x20)                           
+      Name:                    amdgcn-amd-amdhsa--gfx1100         
+      Name:                    amdgcn-amd-amdhsa--gfx11-generic   
+  Name:                    gfx1100                            
+  Uuid:                    GPU-f182ffe37ff41e92               
+  Marketing Name:          Radeon RX 7900 XT                  
+  Vendor Name:             AMD                                
+  Cache Info:              
+  Cacheline Size:          64(0x40)                           
+  Max Clock Freq. (MHz):   2129                               
+  BDFID:                   768                                
+  Compute Unit:            84                                 
+  Wavefront Size:          32(0x20)                           
+      Name:                    amdgcn-amd-amdhsa--gfx1100         
+      Name:                    amdgcn-amd-amdhsa--gfx11-generic   

@@ -1,0 +1,25 @@
+== vazao de compressao (mediana [Q1-Q3]) ==
+  ca26a31                  2.60 GB/s  [2.59 - 2.61]  n=10
+  4a1dcfe                  4.91 GB/s  [4.46 - 4.92]  n=10  1.889x vs anterior
+  4678ea4                  7.22 GB/s  [6.48 - 7.29]  n=10  1.469x vs anterior
+  981e19c                  4.31 GB/s  [4.03 - 4.33]  n=10  0.597x vs anterior
+  7495b65                  4.92 GB/s  [4.41 - 4.94]  n=10  1.141x vs anterior
+  7495b65_v2               4.92 GB/s  [4.46 - 4.93]  n=10  1.001x vs anterior
+  ganho total 7495b65_v2 / ca26a31: 1.89x
+
+== portao: bytes exatos por arquivo da escada ==
+  !! synth_binary_1mb             ca26a31=18668170 4a1dcfe=18677218 4678ea4=18677218 981e19c=18669562 7495b65=18677218 7495b65_v2=18677218
+     synth_random_1mb             ca26a31=61056832 4a1dcfe=61056832 4678ea4=61056832 981e19c=61056832 7495b65=61056832 7495b65_v2=61056832
+     synth_zeros_1mb              ca26a31=247776 4a1dcfe=247776 4678ea4=247776 981e19c=247776 7495b65=247776 7495b65_v2=247776
+  !! tti_64x64x64_mid             ca26a31=61047146 4a1dcfe=61056774 4678ea4=61056774 981e19c=61056368 7495b65=61056774 7495b65_v2=61056774
+     tti_rsf_64x64x64_t000        ca26a31=247776 4a1dcfe=247776 4678ea4=247776 981e19c=247776 7495b65=247776 7495b65_v2=247776
+  !! tti_rsf_64x64x64_t050        ca26a31=61056658 4a1dcfe=61056832 4678ea4=61056832 981e19c=61056832 7495b65=61056832 7495b65_v2=61056832
+     v2_synth_binary_1mb          7495b65=18677218
+     v2_synth_random_1mb          7495b65=61056832
+     v2_synth_zeros_1mb           7495b65=247776
+     v2_tti_64x64x64_mid          7495b65=61056774
+     v2_tti_rsf_64x64x64_t000     7495b65=247776
+     v2_tti_rsf_64x64x64_t050     7495b65=61056832
+
+('!!' = bytes mudaram entre commits: compare com a linha de base da
+ tentativa antes de aceitar; mudanca de razao e o sinal de falha silenciosa)

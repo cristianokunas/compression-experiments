@@ -1,0 +1,9 @@
+== 0000:03:00.0 0x1002/0x744c
+  link atual: 16.0 GT/s PCIe x16
+  link max:   16.0 GT/s PCIe x16
+== 0000:2a:00.0 0x1a03/0x2000
+  link atual:  x
+  link max:    x
+== 0000:43:00.0 0x1002/0x744c
+  link atual: 16.0 GT/s PCIe x16
+  link max:   16.0 GT/s PCIe x16

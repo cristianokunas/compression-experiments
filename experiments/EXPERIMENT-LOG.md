@@ -540,7 +540,7 @@ LDS allocation is itself an occupancy limiter.
 
 | Attempt | Commit | Verdict |
 |---|---|---|
-| O1 — wave-conditional default: 128 (wave32) / 64 (wave64) | `4a1dcfe` | **OPEN — measuring on 3 GPUs** |
+| O1 — wave-conditional default: 128 (wave32) / 64 (wave64) | `4a1dcfe` | **KEPT on 3/3** (2026-08-20): 29.2 / 64.4 / 8.2 GB/s vs predicted ~30.8 / ~63.9 / ~8.1; worst byte deviation +0.0485 %, inside the E08 band |
 
 Lands E08/E09 as shipped behavior. Predictions: ~30.8 / ~63.9 / ~8.1 GB/s on
 gfx1100 / gfx90a / gfx906 for dense 64K-chunk input with no flags; ratio within
@@ -550,7 +550,7 @@ gfx1100 / gfx90a / gfx906 for dense 64K-chunk input with no flags; ratio within
 
 | Attempt | Commit | Verdict |
 |---|---|---|
-| A8 — `-DARCTO_LZ4_LDS_TABLE=1`, table in scratchpad at O1 sizes | `4678ea4` | **OPEN — measuring on 3 GPUs** |
+| A8 — table in LDS at O1 sizes | `4678ea4`, default-on in `f5f089a` | **KEPT on 3/3, both regimes** — the campaign's headline: gfx90a 80.5 GB/s (+25 %), gfx1100 31.9 (+9 %), gfx906 32.6 (**+300 %**), byte-identical output everywhere; also wins at small input (+16 %, +10 %, +47 %) |
 
 Predictions: probes leave the per-CU vector cache (`TCP_TCC_READ_REQ` collapses
 toward a tableless baseline on CDNA); throughput at least at parity with the
@@ -561,7 +561,7 @@ saturation. 128-256 B of LDS per wave; the occupancy objection is dead.
 
 | Attempt | Commit | Verdict |
 |---|---|---|
-| O3 — `-DARCTO_LZ4_RUNTIME_TABLE=1` + MAX 16384: cap = L1/(concurrent waves) from device properties | `981e19c` | **OPEN — measuring on 3 GPUs** |
+| O3 — runtime cap = L1/(concurrent waves) | `981e19c`, reverted in `da94739` | **REVERTED as runtime code; KEPT as derivation.** As coded it finds the knee, not the optimum: 0.71x / 0.96x / 0.84x of O1 at saturation, and it loses at small input too, the only regime where it differs. The parity prediction failed — informative failure: the optimum sits two octaves below the knee. `optimum = (L1 / max_waves) / 4`, clamped to [64, MAX], reproduces O1's constants exactly on gfx1100 (512/4 = 128) and gfx90a (256/4 = 64), so the shipped defaults are now *derived*, not tuned |
 
 Refined prediction (sharper than the commit text): **parity** with the fixed O1
 default on dense data in both regimes, since a larger allowed table is flat, not
@@ -573,14 +573,26 @@ claimed is the form: the cap computed from two device properties, no sweep.
 
 | Attempt | Commit | Verdict |
 |---|---|---|
-| O4a — `-DARCTO_LZ4_W32_MIN_WAVES=12` (VGPR ≤ 128) | `7495b65` | **OPEN — gfx1100** |
-| O4b — `-DARCTO_LZ4_W32_MIN_WAVES=16` (VGPR ≤ 96) | `7495b65` | **OPEN — gfx1100** |
+| O4a — min-waves 12 (VGPR ≤ 128) | `7495b65` | **REVERTED** (`7950a3d`): 0.94x on gfx1100 at saturation, 0.74x small |
+| O4b — min-waves 16 (VGPR ≤ 96) | `7495b65` | **REVERTED**: 0.79x saturated, worse still small — monotone worsening with aggressiveness, the spill signature; two attempts sufficed |
 
 Basis: kernel-symbol table shows 136 arch VGPRs on gfx1100 (residency ~10/16
 waves per SIMD) against 64 on MI210 (already at its step) and 32 on MI50.
 Prediction: more resident waves on gfx1100 with small added footprint at O1
 sizes; spills are the counterweight, checked by the before/after VGPR counts.
 Wave64 rows built from this tip serve as tip-replication.
+
+## The round's progression ladder (inherited → O1 → O1+LDS, dense 64K chunk)
+
+| GPU | inherited | O1 | O1+LDS | total |
+|---|---|---|---|---|
+| gfx1100 (RX 7900 XT) | 6.28 | 29.17 | **31.87** | **5.1x** |
+| gfx90a (MI210) | 2.56 | 64.35 | **80.51** | **31.4x** |
+| gfx906 (MI50) | 1.82 | 8.17 | **32.63** | **17.9x** |
+
+Small-input regime (17 MB, undersubscribed): totals 1.3x / 2.7x / 2.7x, with LDS
+still the top build on all three. Baselines replicate the known family values;
+data in `campaign-o-2026-08-20/`, six builds per GPU, exact-bytes gate on all.
 
 ## E06 revisit — small-input regime (O5, measurement only)
 

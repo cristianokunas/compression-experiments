@@ -1,0 +1,365 @@
+GPU: 0
+    ASIC:
+        MARKET_NAME: Radeon RX 7900 XT
+        VENDOR_ID: 0x1002
+        VENDOR_NAME: Advanced Micro Devices Inc. [AMD/ATI]
+        SUBVENDOR_ID: 0x148c
+        DEVICE_ID: 0x744c
+        SUBSYSTEM_ID: 0x2423
+        REV_ID: 0xcc
+        ASIC_SERIAL: 0xF182FFE37FF41E92
+        OAM_ID: N/A
+        NUM_COMPUTE_UNITS: 84
+        TARGET_GRAPHICS_VERSION: gfx1100
+    BUS:
+        BDF: 0000:03:00.0
+        MAX_PCIE_WIDTH: 16
+        MAX_PCIE_SPEED: 16 GT/s
+        PCIE_LEVELS:
+            0: (2.5 GT/s, 1)
+            1: (5.0 GT/s, 4)
+            2: (16.0 GT/s, 16)
+        PCIE_INTERFACE_VERSION: Gen 4
+        SLOT_TYPE: CEM
+    IFWI:
+        NAME: P38GA_X3
+        BUILD_DATE: 2022/11/21 05:18
+        PART_NUMBER: 113-TIC106715-001
+        VERSION: 022.001.002.009.000001
+    LIMIT:
+        PPT0:
+            MAX_POWER_LIMIT: 274 W
+            MIN_POWER_LIMIT: 0 W
+            SOCKET_POWER_LIMIT: 274 W
+        PPT1:
+            MAX_POWER_LIMIT: N/A
+            MIN_POWER_LIMIT: N/A
+            SOCKET_POWER_LIMIT: N/A
+        SLOWDOWN_EDGE_TEMPERATURE: 100 °C
+        SLOWDOWN_HOTSPOT_TEMPERATURE: 110 °C
+        SLOWDOWN_VRAM_TEMPERATURE: 108 °C
+        SHUTDOWN_EDGE_TEMPERATURE: 105 °C
+        SHUTDOWN_HOTSPOT_TEMPERATURE: 115 °C
+        SHUTDOWN_VRAM_TEMPERATURE: 113 °C
+        PTL_STATE: N/A
+        PTL_FORMAT: N/A
+    DRIVER:
+        NAME: amdgpu
+        VERSION: 6.3.6
+    BOARD:
+        MODEL_NUMBER: N/A
+        PRODUCT_SERIAL: N/A
+        FRU_ID: N/A
+        PRODUCT_NAME: Navi 31 [Radeon RX 7900 XT/7900 XTX]
+        MANUFACTURER_NAME: Advanced Micro Devices, Inc. [AMD/ATI]
+    RAS:
+        EEPROM_VERSION: N/A
+        BAD_PAGE_THRESHOLD: N/A
+        BAD_PAGE_THRESHOLD_EXCEEDED: N/A
+        PARITY_SCHEMA: N/A
+        SINGLE_BIT_SCHEMA: N/A
+        DOUBLE_BIT_SCHEMA: N/A
+        POISON_SCHEMA: N/A
+        ECC_BLOCK_STATE: N/A
+    SOC_PSTATE: N/A
+    XGMI_PLPD: N/A
+    PROCESS_ISOLATION: N/A
+    NUMA:
+        NODE: 0
+        AFFINITY: NONE
+        CPU_AFFINITY: N/A
+        SOCKET_AFFINITY: N/A
+    VRAM:
+        TYPE: GDDR6
+        VENDOR: SAMSUNG
+        SIZE: 20464 MB
+        BIT_WIDTH: 320
+        MAX_BANDWIDTH: N/A 
+    CACHE_INFO:
+        CACHE_0:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 32 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 1
+            NUM_CACHE_INSTANCE: 84
+        CACHE_1:
+            CACHE_PROPERTIES: INST_CACHE, SIMD_CACHE
+            CACHE_SIZE: 32 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 2
+            NUM_CACHE_INSTANCE: 42
+        CACHE_2:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 16 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 2
+            NUM_CACHE_INSTANCE: 42
+        CACHE_3:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 256 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 6
+            NUM_CACHE_INSTANCE: 6
+        CACHE_4:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 256 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 8
+            NUM_CACHE_INSTANCE: 6
+        CACHE_5:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 6144 KB
+            CACHE_LEVEL: 2
+            MAX_NUM_CU_SHARED: 84
+            NUM_CACHE_INSTANCE: 1
+        CACHE_6:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 81920 KB
+            CACHE_LEVEL: 3
+            MAX_NUM_CU_SHARED: 84
+            NUM_CACHE_INSTANCE: 1
+    CLOCK:
+        SYS:
+            CURRENT_LEVEL: 1
+            CURRENT_FREQUENCY: 97MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 500 MHz
+                LEVEL 1: 97 MHz
+                LEVEL 2: 2129 MHz
+        MEM:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 96MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 96 MHz
+                LEVEL 1: 456 MHz
+                LEVEL 2: 772 MHz
+                LEVEL 3: 1249 MHz
+        DF:
+            CURRENT_LEVEL: 2
+            CURRENT_FREQUENCY: 1200MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 601 MHz
+                LEVEL 1: 1000 MHz
+                LEVEL 2: 1200 MHz
+                LEVEL 3: 1600 MHz
+                LEVEL 4: 2000 MHz
+                LEVEL 5: 2201 MHz
+                LEVEL 6: 2251 MHz
+                LEVEL 7: 2301 MHz
+        SOC:
+            CURRENT_LEVEL: 1
+            CURRENT_FREQUENCY: 750MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 500 MHz
+                LEVEL 1: 750 MHz
+                LEVEL 2: 1500 MHz
+        DCEF:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 145MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 145 MHz
+                LEVEL 1: 1563 MHz
+        VCLK0:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+        VCLK1:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+        DCLK0:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+        DCLK1:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+
+GPU: 1
+    ASIC:
+        MARKET_NAME: Radeon RX 7900 XT
+        VENDOR_ID: 0x1002
+        VENDOR_NAME: Advanced Micro Devices Inc. [AMD/ATI]
+        SUBVENDOR_ID: 0x148c
+        DEVICE_ID: 0x744c
+        SUBSYSTEM_ID: 0x2423
+        REV_ID: 0xcc
+        ASIC_SERIAL: 0x21556F108E5669A9
+        OAM_ID: N/A
+        NUM_COMPUTE_UNITS: 84
+        TARGET_GRAPHICS_VERSION: gfx1100
+    BUS:
+        BDF: 0000:43:00.0
+        MAX_PCIE_WIDTH: 16
+        MAX_PCIE_SPEED: 16 GT/s
+        PCIE_LEVELS:
+            0: (2.5 GT/s, 1)
+            1: (5.0 GT/s, 4)
+            2: (16.0 GT/s, 16)
+        PCIE_INTERFACE_VERSION: Gen 4
+        SLOT_TYPE: CEM
+    IFWI:
+        NAME: P38GA_X3
+        BUILD_DATE: 2022/11/21 05:18
+        PART_NUMBER: 113-TIC106715-001
+        VERSION: 022.001.002.009.000001
+    LIMIT:
+        PPT0:
+            MAX_POWER_LIMIT: 274 W
+            MIN_POWER_LIMIT: 0 W
+            SOCKET_POWER_LIMIT: 274 W
+        PPT1:
+            MAX_POWER_LIMIT: N/A
+            MIN_POWER_LIMIT: N/A
+            SOCKET_POWER_LIMIT: N/A
+        SLOWDOWN_EDGE_TEMPERATURE: 100 °C
+        SLOWDOWN_HOTSPOT_TEMPERATURE: 110 °C
+        SLOWDOWN_VRAM_TEMPERATURE: 108 °C
+        SHUTDOWN_EDGE_TEMPERATURE: 105 °C
+        SHUTDOWN_HOTSPOT_TEMPERATURE: 115 °C
+        SHUTDOWN_VRAM_TEMPERATURE: 113 °C
+        PTL_STATE: N/A
+        PTL_FORMAT: N/A
+    DRIVER:
+        NAME: amdgpu
+        VERSION: 6.3.6
+    BOARD:
+        MODEL_NUMBER: N/A
+        PRODUCT_SERIAL: N/A
+        FRU_ID: N/A
+        PRODUCT_NAME: Navi 31 [Radeon RX 7900 XT/7900 XTX]
+        MANUFACTURER_NAME: Advanced Micro Devices, Inc. [AMD/ATI]
+    RAS:
+        EEPROM_VERSION: N/A
+        BAD_PAGE_THRESHOLD: N/A
+        BAD_PAGE_THRESHOLD_EXCEEDED: N/A
+        PARITY_SCHEMA: N/A
+        SINGLE_BIT_SCHEMA: N/A
+        DOUBLE_BIT_SCHEMA: N/A
+        POISON_SCHEMA: N/A
+        ECC_BLOCK_STATE: N/A
+    SOC_PSTATE: N/A
+    XGMI_PLPD: N/A
+    PROCESS_ISOLATION: N/A
+    NUMA:
+        NODE: 0
+        AFFINITY: NONE
+        CPU_AFFINITY: N/A
+        SOCKET_AFFINITY: N/A
+    VRAM:
+        TYPE: GDDR6
+        VENDOR: SAMSUNG
+        SIZE: 20464 MB
+        BIT_WIDTH: 320
+        MAX_BANDWIDTH: N/A 
+    CACHE_INFO:
+        CACHE_0:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 32 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 1
+            NUM_CACHE_INSTANCE: 84
+        CACHE_1:
+            CACHE_PROPERTIES: INST_CACHE, SIMD_CACHE
+            CACHE_SIZE: 32 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 2
+            NUM_CACHE_INSTANCE: 42
+        CACHE_2:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 16 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 2
+            NUM_CACHE_INSTANCE: 42
+        CACHE_3:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 256 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 6
+            NUM_CACHE_INSTANCE: 6
+        CACHE_4:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 256 KB
+            CACHE_LEVEL: 1
+            MAX_NUM_CU_SHARED: 8
+            NUM_CACHE_INSTANCE: 6
+        CACHE_5:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 6144 KB
+            CACHE_LEVEL: 2
+            MAX_NUM_CU_SHARED: 84
+            NUM_CACHE_INSTANCE: 1
+        CACHE_6:
+            CACHE_PROPERTIES: DATA_CACHE, SIMD_CACHE
+            CACHE_SIZE: 81920 KB
+            CACHE_LEVEL: 3
+            MAX_NUM_CU_SHARED: 84
+            NUM_CACHE_INSTANCE: 1
+    CLOCK:
+        SYS:
+            CURRENT_LEVEL: 1
+            CURRENT_FREQUENCY: 128MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 500 MHz
+                LEVEL 1: 128 MHz
+                LEVEL 2: 2129 MHz
+        MEM:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 96MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 96 MHz
+                LEVEL 1: 456 MHz
+                LEVEL 2: 772 MHz
+                LEVEL 3: 1249 MHz
+        DF:
+            CURRENT_LEVEL: 1
+            CURRENT_FREQUENCY: 1000MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 601 MHz
+                LEVEL 1: 1000 MHz
+                LEVEL 2: 1200 MHz
+                LEVEL 3: 1600 MHz
+                LEVEL 4: 2000 MHz
+                LEVEL 5: 2201 MHz
+                LEVEL 6: 2251 MHz
+                LEVEL 7: 2301 MHz
+        SOC:
+            CURRENT_LEVEL: 1
+            CURRENT_FREQUENCY: 600MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 500 MHz
+                LEVEL 1: 600 MHz
+                LEVEL 2: 1500 MHz
+        DCEF:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 145MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 145 MHz
+                LEVEL 1: 1563 MHz
+        VCLK0:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+        VCLK1:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+        DCLK0:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+        DCLK1:
+            CURRENT_LEVEL: 0
+            CURRENT_FREQUENCY: 25MHz
+            FREQUENCY_LEVELS:
+                LEVEL 0: 25 MHz
+
+

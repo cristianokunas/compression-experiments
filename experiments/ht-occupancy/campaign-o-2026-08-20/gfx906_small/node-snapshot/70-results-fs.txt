@@ -1,0 +1,5 @@
+Filesystem              Type  Size  Used Avail Use% Mounted on
+nfs:/export/home/ckunas nfs    14T   12T  1.5T  89% /home/ckunas
+
+TARGET       SOURCE                  FSTYPE OPTIONS
+/home/ckunas nfs:/export/home/ckunas nfs    rw,nosuid,nodev,relatime,vers=3,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,mountaddr=172.16.63.1,mountvers=3,mountport=34092,mountproto=udp,local_lock=none,addr=172.16.63.1

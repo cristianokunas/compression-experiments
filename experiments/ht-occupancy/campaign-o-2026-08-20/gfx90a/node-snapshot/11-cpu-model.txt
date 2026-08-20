@@ -1,0 +1,2 @@
+model name	: INTEL(R) XEON(R) PLATINUM 8568Y+
+192

@@ -1,0 +1,7 @@
+NAME   MODEL             SIZE ROTA TYPE FSTYPE MOUNTPOINT
+sda    Dell_NVMe_ISE_PS  2.9T    0 disk        
+├─sda1                   3.7G    0 part swap   [SWAP]
+├─sda2                  28.9G    0 part ext4   /
+├─sda3                  31.7G    0 part ext4   
+├─sda4                   953M    0 part vfat   
+└─sda5                   2.8T    0 part ext4   /tmp

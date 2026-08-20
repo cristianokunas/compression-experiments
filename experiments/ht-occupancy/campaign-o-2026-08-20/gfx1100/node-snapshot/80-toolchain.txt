@@ -1,0 +1,6 @@
+gcc: gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+g++: g++ (Debian 12.2.0-14+deb12u1) 12.2.0
+cmake: cmake version 3.25.1
+git: git version 2.39.5
+python3: Python 3.11.14
+singularity: singularity-ce version 4.2.0
