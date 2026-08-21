@@ -649,3 +649,47 @@ gfx1100 in the global-table regime (o-campaign baseline 6.28 vs clean-lineage
 (`opt/integration-2026-08`) is knob-free.
 
 MI300X is the missing column; `mi300x-playbook.md` runs this exact bundle.
+
+---
+
+## E17 — Lineage curation: what July is actually worth at the tip
+
+Question raised by the ladder's per-rung regressions: are the July keeps
+essential to v9/v10, or dead weight to prune? The rung marginals cannot answer
+it, and the first attempt to extrapolate from them was **wrong** — the ladder
+entry above projected "gating would lift totals to ~5.1x/35x/18.6x" by adding
+marginals across rungs, and the direct measurement refuted that arithmetic.
+
+**Measurements (gfx1100, 30 reps, container, `curation-gfx1100/`):**
+
+| lineage | GB/s | vs v10 |
+|---|---|---|
+| vMin = main + O1 + O2 (`4d49ad2`, tag `ladder-min`) | 16.07 | 0.51x |
+| vMin + E04 (`39768fb`, tag `ladder-min-e04`) | **35.11** | **1.106x** |
+| v10 = all of July + O1 + O2 (`062800d`) | 31.75 | 1.0 |
+
+Byte-identical output across all three (pure speed differences).
+
+**Three findings:**
+
+1. **E04's verdict flips with the operating point.** At the old ht16384-global
+   point its marginal was −12.4 % on gfx1100; at the ht128-LDS tip it is worth
+   **2.18x** (16.07 → 35.11). With the table fast, the `warpMatchAny` per-insert
+   overhead that E04 removes becomes the bottleneck. The sharpest
+   non-additivity example the loop has produced.
+2. **The rest of July costs ~10 % at the wave32 tip** (35.11 vs 31.75): E02's
+   regression persists there, plus accumulated small costs. Pruning is not just
+   simplification — it gains.
+3. **Methodological rule, learned by refutation: essentiality is measured by
+   ablation at the tip, never by the rung's own marginal.** Rung marginals are
+   properties of their operating point; the curated lineage must be selected by
+   leave-one-out (or add-one-in, as here) against the final configuration.
+
+**Curated wave32 candidate:** `main + E04 + O1 + O2` — the new gfx1100 best.
+**Queued for the next CDNA/MI300X reservations:** the same two lineages there
+(on wave64, E05/E07-claim earned real gains at the old point; whether they
+survive at the tip is exactly this experiment again), then the re-measured
+curated ladder becomes the thesis figure, with the 2026-08-20 full ladder kept
+as the process record. The curation principle (user, 2026-08-21): keep only
+what measures useful at the tip, plus correctness guards and genuine code
+hygiene; regressions that scaffolded a later win fold into that win's rung.

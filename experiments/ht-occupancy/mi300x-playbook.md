@@ -37,6 +37,13 @@ roteiro pronto para gastar bem a reserva, na ordem de valor.
    Fecha a assinatura das duas camadas na quarta arquitetura, com os nomes
    `TCP_*` que a CDNA3 comprovadamente expõe (campanha de maio).
 
+## Curadoria (adicionado 2026-08-21)
+
+Depois da escada, rodar as duas linhagens de curadoria (bundles `minlin.bundle`
+e `minlin2.bundle`, tags `ladder-min` e `ladder-min-e04`): no gfx1100 a linhagem
+`main + E04 + O1 + O2` superou o v10 em +10,6 % com bytes idênticos. Em wave64
+a pergunta é se E05/E07-claim sobrevivem no tip; é o experimento E17 repetido.
+
 ## Cuidados específicos da vianden
 
 - `HIP_VISIBLE_DEVICES` fixo: o nó tem 8 aceleradores; medir num, contadores
