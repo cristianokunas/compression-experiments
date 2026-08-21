@@ -843,3 +843,20 @@ Nota de userspace: esta coluna e ROCm 7.0.2 nativo; as colunas G5K sao
 container 7.0.1. O SDumont tem SingularityPRO 4.3.1, entao a re-medicao com
 a MESMA imagem fecha a comparabilidade e quantifica o efeito de userspace
 (imagem em transito; vira sbatch quando aterrissar).
+
+**E18 contadores (fecha o item aberto de E09/E12).** `perf_event_paranoid=0`
+no SDumont: PMC coleta sem sudo, sem kadeploy. Matriz rocprofv3 no kernel de
+compressao (denso, dup 64, soma sobre dispatches; `campaign-mi300a-2026-08-21/pmc/`):
+
+| build | TCP_TCC_READ_REQ | TCP_TOTAL_CACHE_ACCESSES | razao |
+|---|---|---|---|
+| v1 (ht16384 global) | 3.9e8 | 7.5e8 | 0.52 |
+| v9 (tabela pequena) | 9.9e6 | 3.3e8 | 0.030 |
+| v10 (LDS) | 5.9e6 | 2.0e8 | 0.029 |
+| curada | 5.9e6 | 2.0e8 | = v10 |
+
+**40x menos leituras L1->L2 ao dimensionar a tabela**: a confirmacao direta
+por contadores da mecanica de residencia, na quarta arquitetura. Metade dos
+acessos do kernel herdado iam ao L2; no ponto final, 3 %. A curada e
+byte-a-byte identica ao v10 tambem nos contadores, como previsto (mesmo
+caminho de kernel no wave64).
