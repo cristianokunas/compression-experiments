@@ -41,6 +41,18 @@ sbatch singularity/sdumont-payload.sbatch                        # batch
    ROCm 7.0.2 do nó registrado no provenance. Para comparação fina com o
    G5K, preferir a imagem.
 4. O nó tem saída https (clone do submódulo zfp funciona direto).
+5. **Build de imagem no nó: bloqueado por padrão, com destrave possível.**
+   Três mecanismos atendem por "fakeroot": (a) userns de uid único
+   (`unshare -r` funciona sem admin, mas apt precisa de múltiplos donos e
+   falha); (b) o `--fakeroot` padrão do Singularity, que exige linha em
+   `/etc/subuid` E `newuidmap` setuid, e no SDumont o newuidmap está sem o
+   bit setuid (desativado de propósito; a única linha de subuid é de
+   cristiano.kunas2 e tampouco funcionaria); (c) o pacote `fakeroot`
+   (LD_PRELOAD), que o SingularityPRO 4.x usa como fallback para emular os
+   donos dentro do userns de uid único. O (c) não está instalado, mas
+   compila sem root em `$HOME/.local`; com ele no PATH,
+   `singularity build --fakeroot` deve funcionar só com o que o nó oferece.
+   Enquanto isso, imagens chegam por upload (2 MB/s pela VPN).
 5. Duas APUs por nó: medir com `HIP_VISIBLE_DEVICES=0` fixo; a outra fica
    para contadores, como nas sessões da neowise.
 
