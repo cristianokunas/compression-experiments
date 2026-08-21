@@ -1,0 +1,15 @@
+== vazao de compressao (mediana [Q1-Q3]) ==
+  46eac67                 28.30 GB/s  [28.27 - 28.37]  n=30
+  210e52a                 26.83 GB/s  [26.70 - 26.95]  n=30  0.948x vs anterior
+  ganho total 210e52a / 46eac67: 0.95x
+
+== portao: bytes exatos por arquivo da escada ==
+     synth_binary_1mb             46eac67=18677218 210e52a=18677218
+     synth_random_1mb             46eac67=61056832 210e52a=61056832
+     synth_zeros_1mb              46eac67=247776 210e52a=247776
+     tti_64x64x64_mid             46eac67=61056774 210e52a=61056774
+     tti_rsf_64x64x64_t000        46eac67=247776 210e52a=247776
+     tti_rsf_64x64x64_t050        46eac67=61056832 210e52a=61056832
+
+('!!' = bytes mudaram entre commits: compare com a linha de base da
+ tentativa antes de aceitar; mudanca de razao e o sinal de falha silenciosa)

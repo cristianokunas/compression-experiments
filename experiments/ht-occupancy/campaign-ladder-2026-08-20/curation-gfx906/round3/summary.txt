@@ -1,0 +1,15 @@
+== vazao de compressao (mediana [Q1-Q3]) ==
+  11ba2f5                 28.33 GB/s  [28.31 - 28.35]  n=30
+  4205441                 31.93 GB/s  [31.85 - 32.07]  n=30  1.127x vs anterior
+  ganho total 4205441 / 11ba2f5: 1.13x
+
+== portao: bytes exatos por arquivo da escada ==
+     synth_binary_1mb             11ba2f5=18677218 4205441=18677218
+     synth_random_1mb             11ba2f5=61056832 4205441=61056832
+     synth_zeros_1mb              11ba2f5=247776 4205441=247776
+     tti_64x64x64_mid             11ba2f5=61056774 4205441=61056774
+     tti_rsf_64x64x64_t000        11ba2f5=247776 4205441=247776
+     tti_rsf_64x64x64_t050        11ba2f5=61056832 4205441=61056832
+
+('!!' = bytes mudaram entre commits: compare com a linha de base da
+ tentativa antes de aceitar; mudanca de razao e o sinal de falha silenciosa)

@@ -1,0 +1,6 @@
+gcc: gcc (Debian 10.2.1-6) 10.2.1 20210110
+g++: g++ (Debian 10.2.1-6) 10.2.1 20210110
+cmake: cmake version 3.18.4
+git: git version 2.30.2
+python3: Python 3.9.2
+singularity: singularity-ce version 4.1.2-focal

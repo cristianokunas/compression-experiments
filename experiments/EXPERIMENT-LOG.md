@@ -693,3 +693,39 @@ curated ladder becomes the thesis figure, with the 2026-08-20 full ladder kept
 as the process record. The curation principle (user, 2026-08-21): keep only
 what measures useful at the tip, plus correctness guards and genuine code
 hygiene; regressions that scaffolded a later win fold into that win's rung.
+
+### E17 (cont.) — add-one-in nas CDNA: a linhagem curada do wave64 (2026-08-21)
+
+Nós batch: larochette-4 (MI210) e neowise-1 (MI50), container, 30 reps,
+portão de bytes em todas as rodadas (saída idêntica ao v10 em ambas as archs,
+diferenças puramente de velocidade). Dados em
+`campaign-ladder-2026-08-20/curation-gfx90a/round{1,2,3}/` e `curation-gfx906/...`.
+
+| linhagem | gfx90a GB/s | gfx906 GB/s |
+|---|---|---|
+| vMin = main+O1+O2 (`4d49ad2`) | 5.52 | 2.94 |
+| +E04 warpMatchAny (`39768fb`) | 8.73 | 4.86 |
+| +claim table (`46eac67`) | 58.33 | 28.30 |
+| +vgpr pin sobre claim (`210e52a`) | 58.49 | 26.83 |
+| +launch_bounds sobre claim (`11ba2f5`) | 58.38 | 28.33 |
+| +restrict sobre launch_bounds (`4205441`) | 69.19 | 31.93 |
+| v10 referência (`062800d`) | 80.37 | 32.41 |
+
+Veredictos por peça, medidos no tip:
+
+- **Claim table LDS (`df13f11`) é a peça dominante do wave64**: 6.7x na MI210,
+  5.8x na MI50. Com a tabela de hash rápida, o twin-scan 64-wide do main é o
+  gargalo absoluto; a linhagem sem ela fica em 11-15 % do tip.
+- **E04 continua essencial** também no wave64 (1.58x/1.65x antes da claim).
+- **VGPR pin (`e3293a1`): fora da linhagem curada.** Neutro na MI210 (+0.3 %),
+  −5.2 % na MI50, coerente com o −26.9 % do degrau antigo no gfx906. Candidato
+  a gate gfx942-only se a vianden mostrar que lá ele paga.
+- **launch_bounds (`a3967f3`): neutro no tip das duas CDNA** (+0.1 %). A
+  hipótese de que governaria a ocupância com LDS caiu.
+- **__restrict__ (`cf40a20`) é a terceira peça real do wave64**: +18.5 % MI210,
+  +12.7 % MI50 — no wave32 do degrau antigo ele media −4.4 %. Segundo caso de
+  veredicto que troca de sinal com arquitetura e ponto de operação.
+- MI50 fecha em 31.93 vs 32.41 (−1.5 %); MI210 ainda deve 1.16x para o v10.
+  Round 4 em andamento testa o wave32-only (`61218f5`, rótulo suspeito), a
+  reconstrução integral (sanity do método cherry-pick) e a candidata curada
+  `main+E02+E04+claim+O1+O2` nas três GPUs.

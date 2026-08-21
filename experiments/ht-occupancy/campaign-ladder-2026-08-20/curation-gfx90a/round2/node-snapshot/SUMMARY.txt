@@ -1,0 +1,8 @@
+host:    larochette-4.luxembourg.grid5000.fr  (2026-08-21T20:33:07+02:00)
+so:      Debian GNU/Linux 11 (bullseye)  kernel 5.10.0-38-amd64
+cpu:     INTEL(R) XEON(R) PLATINUM 8568Y+  x192
+mem:     503 GiB
+governor:performance  smt:on
+gpu:     AMD (gfx90a)  driver amdgpu 
+gpu:     NVIDIA NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.
+result:  /home/ckunas/curation_2_gfx90a em nfs:/export/home/ckunas nfs4
