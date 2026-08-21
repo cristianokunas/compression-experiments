@@ -1,0 +1,13 @@
+== vazao de compressao (mediana [Q1-Q3]) ==
+  35a6442                 79.87 GB/s  [79.74 - 80.02]  n=30
+
+== portao: bytes exatos por arquivo da escada ==
+     synth_binary_1mb             35a6442=18677218
+     synth_random_1mb             35a6442=61056832
+     synth_zeros_1mb              35a6442=247776
+     tti_64x64x64_mid             35a6442=61056774
+     tti_rsf_64x64x64_t000        35a6442=247776
+     tti_rsf_64x64x64_t050        35a6442=61056832
+
+('!!' = bytes mudaram entre commits: compare com a linha de base da
+ tentativa antes de aceitar; mudanca de razao e o sinal de falha silenciosa)

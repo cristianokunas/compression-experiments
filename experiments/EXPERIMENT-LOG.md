@@ -776,3 +776,36 @@ guarda; E08 mantido (já autogateado). Previsto: ~35.1 / ~80.0 / ~33.0 GB/s
 contra 31.75 / 80.37 / 32.41 do v10 — +10.6 % no wave32, paridade no wave64,
 com três commits a menos de superfície não gateada. A escada re-medida dessa
 linhagem é a figura da tese; a escada histórica fica como registro do processo.
+
+### E17 (encerrado) — a linhagem curada validada nas três arquiteturas (2026-08-21)
+
+Tentativa 1 do commit de gating (`arcto` branch `opt/curated`, commit
+`74ebdd7`, overlay de medição `35a6442`, tag `ladder-curated-a1`): macro
+`ARCTO_KRESTRICT` em `common.h` (restrict só em AMD wave64; wave32 e CUDA
+voltam à forma herdada) e caminho wave32 do twin-search restaurado verbatim ao
+contrato do E04 (rotação + máscara por lane), wave64/CUDA mantêm
+`findEarliestTwin`. Predição do commit: ~35.1 / ~80.0 / ~33.0.
+
+| | curada a1 | v10 | delta |
+|---|---|---|---|
+| gfx1100 | **35.12** | 31.75 | **+10.6 %** |
+| gfx90a | **79.87** | 80.37 | −0.6 % (ruído) |
+| gfx906 | **32.94** | 32.41 | +1.6 % |
+
+Predição cravada nas três células na primeira tentativa; bytes idênticos ao
+v10 em todas. Dados em `campaign-ladder-2026-08-20/curated-a1/` (a célula
+gfx90a veio de **job OAR não interativo** — segundo uso do fluxo batch).
+
+Fluxo batch validado no mesmo dia: job `arcto-valid` (311311) pegou a
+larochette-4 no instante da liberação e reproduziu exatamente os 8.73 GB/s da
+medição interativa; custo por commit ≈2.5 min (clone+build+30 reps, 48
+núcleos). Job `arcto-vianden` (311447) na fila da vianden-1 com payload de 15
+linhas ordenado por valor (v1, v10, curada, curadorias, degraus), walltime
+1:30, para capturar a primeira janela de MI300X.
+
+O E17 encerra com a resposta completa à pergunta de curadoria: a linhagem de
+produção é a integrada + um commit de gating medido célula a célula, e o
+renumeramento v1→vN da tese sai da re-medição dessa linhagem, não de edição
+do histórico. Pendências herdadas: coluna gfx942 (job na fila), escada
+sequencial curada por degrau (v1 → +E04 → +O1 → +O2+gates) para a figura
+final, e a decisão sobre onde o branch `opt/curated` se funde.

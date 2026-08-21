@@ -1,0 +1,15 @@
+Linux lunaris 6.1.0-49-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.174-1 (2026-05-26) x86_64 GNU/Linux
+
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+NAME="Debian GNU/Linux"
+VERSION_ID="12"
+VERSION="12 (bookworm)"
+VERSION_CODENAME=bookworm
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+
+BOOT_IMAGE=/boot/vmlinuz-6.1.0-49-amd64 root=UUID=4ffc5510-f2df-43f0-8218-25bc1369444b ro quiet intel_pstate=disable
+
+ldd (Debian GLIBC 2.36-9+deb12u14) 2.36
