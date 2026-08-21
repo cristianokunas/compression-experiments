@@ -70,6 +70,13 @@ setsid nohup srun --jobid=<JOBID> --overlap -n1 -c48 --gpus=2 \
    `experiments/ht-occupancy/campaign-ladder-2026-08-20/` (ou campanha
    nova) antes de largar a janela; a home não tem backup.
 
+## Estado (2026-08-21)
+
+Itens 1-4 da lista abaixo **feitos** na primeira janela (sdumont2nd4014,
+nativo 7.0.2): coluna densa + regime pequeno completos, curada em paridade
+com v10 nos dois. Ficam: contadores (item 5), a re-medicao em container
+7.0.1 (sbatch quando a imagem chegar) e a fase 2.
+
 ## O que medir, em ordem de valor
 
 A lista `commits-vianden.txt` já está ordenada assim (janela parcial rende):

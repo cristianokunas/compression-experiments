@@ -1,0 +1,5 @@
+Filesystem                                                                                                                                                    Type    Size  Used Avail Use% Mounted on
+172.21.11.1@o2ib1:172.21.11.2@o2ib1:172.21.11.3@o2ib1:172.21.11.4@o2ib1:172.21.11.5@o2ib1:172.21.11.6@o2ib1:172.21.11.7@o2ib1:172.21.11.8@o2ib1:/exa2/petrobr lustre  100G  7.8M  100G   1% /petrobr
+
+TARGET   SOURCE                                                                                                                                                        FSTYPE OPTIONS
+/petrobr 172.21.11.1@o2ib1:172.21.11.2@o2ib1:172.21.11.3@o2ib1:172.21.11.4@o2ib1:172.21.11.5@o2ib1:172.21.11.6@o2ib1:172.21.11.7@o2ib1:172.21.11.8@o2ib1:/exa2/petrobr lustre rw,flock,lazystatfs,encrypt

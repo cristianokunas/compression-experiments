@@ -1,0 +1,2 @@
+model name	: AMD Instinct MI300A Accelerator
+48

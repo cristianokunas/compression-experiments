@@ -1,0 +1,7 @@
+host:    sdumont2nd4014  (2026-08-21T16:45:45-03:00)
+so:      Red Hat Enterprise Linux 9.4 (Plow)  kernel 5.14.0-427.35.1.el9_4.x86_64
+cpu:     AMD Instinct MI300A Accelerator  x48
+mem:     251 GiB
+governor:performance  smt:notsupported
+gpu:     AMD (gfx942)  driver amdgpu 6.10.5
+result:  /petrobr/parceirosbr/home/cristiano.kunas/sweep_mi300a_20260821_1645 em 172.21.11.1@o2ib1:172.21.11.2@o2ib1:172.21.11.3@o2ib1:172.21.11.4@o2ib1:172.21.11.5@o2ib1:172.21.11.6@o2ib1:172.21.11.7@o2ib1:172.21.11.8@o2ib1:/exa2/petrobr lustre

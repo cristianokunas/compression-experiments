@@ -809,3 +809,37 @@ renumeramento v1→vN da tese sai da re-medição dessa linhagem, não de ediç�
 do histórico. Pendências herdadas: coluna gfx942 (job na fila), escada
 sequencial curada por degrau (v1 → +E04 → +O1 → +O2+gates) para a figura
 final, e a decisão sobre onde o branch `opt/curated` se funde.
+
+### E18 — A coluna gfx942 na MI300A do SDumont 2nd (2026-08-21)
+
+Primeira campanha fora do G5K/lunaris: no sdumont2nd4014 (2x MI300A APU,
+gfx942, ROCm 7.0.2 nativo do no, modo `--sif none` do commit-sweep, 48 nucleos
+Zen4). Payload de 15 linhas ordenado por valor, denso (`--dup 512`, 30 reps) e
+regime pequeno (`--dup 16`, 10 reps, builds reaproveitados por hardlink).
+Dados em `campaign-mi300a-2026-08-21/` (+ `small/`), snapshot com modos de
+particao incluido.
+
+**Denso** (GB/s): v1 13.37 -> v10 174.81 -> **curada 175.14** (+0.2 % sobre
+v10). Ganho total herdado -> curada: **13.1x**, o maior das quatro
+arquiteturas, e o maior numero absoluto do enxame (2.2x a MI210).
+Add-one-in replica o padrao wave64 amplificado: vMin 18.15, +E04 29.67
+(1.63x), +claim 147.59 (4.97x), +vgpr 151.63 (1.03x), e o gate
+restrict+vgpr da curada soma +15.5 % sobre isso. Degraus antigos v2..v8
+somam so 1.18x no ponto herdado; a explosao e O1 (tabela pequena, 9.1x
+sobre v8) e O2/LDS (+22.8 %).
+
+**Regime pequeno** (95 MB, fome de waves com 228 CUs): v1 1.06 -> v10 12.33
+-> **curada 12.29** (paridade de novo). Claim table ainda mais dominante
+(5.3x), e o degrau v7 (claim) ja paga 3.9x mesmo no ponto herdado, o
+assinatura do caso de maio: com poucas waves o twin-scan domina antes da
+tabela.
+
+**A curadoria E17 esta confirmada nas quatro arquiteturas e nos dois
+regimes**: a linhagem curada nunca perde do v10 e ganha +10.6 % no wave32.
+Bytes por familia identicos aos das outras wave64 (18677218 etc.); os `!!`
+do portao sao os deltas conhecidos entre geracoes.
+
+Nota de userspace: esta coluna e ROCm 7.0.2 nativo; as colunas G5K sao
+container 7.0.1. O SDumont tem SingularityPRO 4.3.1, entao a re-medicao com
+a MESMA imagem fecha a comparabilidade e quantifica o efeito de userspace
+(imagem em transito; vira sbatch quando aterrissar).

@@ -1,0 +1,4 @@
+kernel.perf_event_paranoid = 0
+vm.swappiness = 60
+kernel.numa_balancing = 0
+vm.overcommit_memory = 0

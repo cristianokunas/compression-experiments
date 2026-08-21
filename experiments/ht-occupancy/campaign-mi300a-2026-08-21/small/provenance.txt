@@ -1,0 +1,9 @@
+date=2026-08-21T17:13:52-03:00
+host=sdumont2nd4014
+gfx=gfx942
+sif=none
+rocm=7.0.2
+source=/petrobr/parceirosbr/home/cristiano.kunas/vianden.bundle
+commits_file=/petrobr/parceirosbr/home/cristiano.kunas/commits-vianden.txt
+reps=10 chunk=65536 input=tests/data/tti_rsf_64x64x64_t050.bin dup=16
+HIP_VISIBLE_DEVICES=0

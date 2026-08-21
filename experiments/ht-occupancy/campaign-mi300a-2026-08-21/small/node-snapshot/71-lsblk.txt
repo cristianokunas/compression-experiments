@@ -1,0 +1,5 @@
+NAME        MODEL                      SIZE ROTA TYPE FSTYPE MOUNTPOINT
+nvme0n1     Micron_7450_MTFDKBZ3T8TFR  3.5T    0 disk        
+├─nvme0n1p1                            500M    0 part vfat   /boot/efi
+├─nvme0n1p2                              1G    0 part ext4   /boot
+└─nvme0n1p3                            3.5T    0 part ext4   /

@@ -1,0 +1,13 @@
+/sys/devices/system/cpu/vulnerabilities/spectre_v2:Mitigation: Enhanced / Automatic IBRS, IBPB: conditional, STIBP: disabled, RSB filling, PBRSB-eIBRS: Not affected
+/sys/devices/system/cpu/vulnerabilities/itlb_multihit:Not affected
+/sys/devices/system/cpu/vulnerabilities/mmio_stale_data:Not affected
+/sys/devices/system/cpu/vulnerabilities/mds:Not affected
+/sys/devices/system/cpu/vulnerabilities/l1tf:Not affected
+/sys/devices/system/cpu/vulnerabilities/spec_store_bypass:Mitigation: Speculative Store Bypass disabled via prctl
+/sys/devices/system/cpu/vulnerabilities/tsx_async_abort:Not affected
+/sys/devices/system/cpu/vulnerabilities/spectre_v1:Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+/sys/devices/system/cpu/vulnerabilities/gather_data_sampling:Not affected
+/sys/devices/system/cpu/vulnerabilities/retbleed:Not affected
+/sys/devices/system/cpu/vulnerabilities/spec_rstack_overflow:Mitigation: Safe RET
+/sys/devices/system/cpu/vulnerabilities/srbds:Not affected
+/sys/devices/system/cpu/vulnerabilities/meltdown:Not affected

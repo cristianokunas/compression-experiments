@@ -1,0 +1,2 @@
+AttributeError: module 'amdsmi.amdsmi_interface' has no attribute 'amdsmi_get_rocm_version'
+amd-smi ausente

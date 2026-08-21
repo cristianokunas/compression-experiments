@@ -1,0 +1,1 @@
+nvme0n1: scheduler=[none] mq-deadline kyber bfq  rotational=0 read_ahead_kb=512
