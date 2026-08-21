@@ -32,12 +32,14 @@ sbatch singularity/sdumont-payload.sbatch                        # batch
    Sempre `srun --gpus=2` no step, mesmo dentro de alocação exclusiva.
 2. **rocminfo lista `gfx9` genérico além de `gfx942`**; a detecção do
    check-node usa o match mais específico (`sort -u | tail -1`).
-3. **Sem singularity**: containers são enroot+pyxis. O caminho adotado é o
-   **modo nativo** do commit-sweep (`--sif none`): `module load rocm/7.0.2`
-   (há também 6.3.3; hipcc do sistema em `/usr/bin` existe mas o módulo é o
-   controlado) e o toolchain do host constrói. O provenance registra o ROCm
-   usado; a comparação fina com as colunas do G5K (container 7.0.1) carrega
-   essa diferença de userspace, anotar ao ler os números.
+3. **Containers**: o manual só documenta enroot+pyxis, mas os nós têm
+   **SingularityPRO 4.3.1** (verificado no login e no cômputo), então a
+   mesma imagem `arcto_toolchain_rocm701.sif` das colunas do G5K roda aqui e
+   dá comparabilidade exata de userspace. O **modo nativo** do commit-sweep
+   (`--sif none`, com `module load rocm/7.0.2`) segue como alternativa sem
+   imagem; a primeira coluna gfx942 (2026-08-21) foi medida nele, com o
+   ROCm 7.0.2 do nó registrado no provenance. Para comparação fina com o
+   G5K, preferir a imagem.
 4. O nó tem saída https (clone do submódulo zfp funciona direto).
 5. Duas APUs por nó: medir com `HIP_VISIBLE_DEVICES=0` fixo; a outra fica
    para contadores, como nas sessões da neowise.
