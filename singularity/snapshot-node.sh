@@ -90,6 +90,10 @@ if [ -e /dev/kfd ] || command -v rocm-smi >/dev/null 2>&1; then
   cap 42-rocm-smi-all.txt  rocm-smi --showallinfo
   capsh 43-rocminfo.txt    'rocminfo 2>/dev/null | grep -E "Name:|Marketing|Compute Unit|Wavefront|Cache|BDFID|Max Clock|Pool Size|Uuid" '
   capsh 44-amd-smi.txt     'command -v amd-smi >/dev/null && amd-smi static 2>&1 || echo "amd-smi ausente"'
+  # MI300: os modos de particao mudam o subsistema de memoria (NPS1/NPS4) e a
+  # apresentacao dos XCDs (SPX/DPX/TPX/CPX); sem isso duas campanhas na mesma
+  # placa podem nao ser comparaveis
+  capsh 44b-partition-modes.txt 'rocm-smi --showcomputepartition 2>&1; rocm-smi --showmemorypartition 2>&1'
 fi
 # tambem via imagem, quando o host nao tem o userspace
 if [ -n "$SIF" ]; then

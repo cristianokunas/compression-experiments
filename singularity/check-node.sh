@@ -47,10 +47,10 @@ info "driver amdgpu (/dev/kfd): $GPU_DEV"
 # --- gfx arch: prefer host rocminfo, fall back to running it inside the image
 GFX_ARCH=""
 if command -v rocminfo >/dev/null 2>&1; then
-  GFX_ARCH=$(rocminfo 2>/dev/null | grep -m1 -oE 'gfx[0-9a-f]+' || true)
+  GFX_ARCH=$(rocminfo 2>/dev/null | grep -oE 'gfx[0-9a-f]+' | sort -u | tail -1 || true)
 fi
 if [ -z "$GFX_ARCH" ] && [ -n "$SIF" ] && [ "$RUNTIME" != none ] && [ "$GPU_DEV" = yes ]; then
-  GFX_ARCH=$("$RUNTIME_BIN" exec --rocm "$SIF" rocminfo 2>/dev/null | grep -m1 -oE 'gfx[0-9a-f]+' || true)
+  GFX_ARCH=$("$RUNTIME_BIN" exec --rocm "$SIF" rocminfo 2>/dev/null | grep -oE 'gfx[0-9a-f]+' | sort -u | tail -1 || true)
 fi
 info "gfx: ${GFX_ARCH:-nao detectado}"
 

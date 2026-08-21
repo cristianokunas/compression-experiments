@@ -12,7 +12,10 @@
 # Usage:
 #   ./commit-sweep.sh --sif IMG --source BUNDLE_OR_REPO --commits FILE [options]
 #
-#   --sif IMG          toolchain image (ROCm, hipcc, cmake inside)
+#   --sif IMG          toolchain image (ROCm, hipcc, cmake inside), or the
+#                      literal "none" to build and run on the host toolchain
+#                      (Slurm sites without singularity, e.g. SDumont: load
+#                      the ROCm environment first and export ROCM_PATH)
 #   --source PATH      git bundle or repository to clone the code from
 #   --commits FILE     one commit per line: "<ref> [extra cmake -D flags...]"
 #                      lines starting with # are ignored; the SAME ref may
@@ -56,15 +59,19 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -n "$SIF" ] && [ -n "$SRC" ] && [ -n "$COMMITS" ] || { echo "obrigatorios: --sif --source --commits (veja --help)" >&2; exit 2; }
-[ -f "$SIF" ] || { echo "imagem nao encontrada: $SIF" >&2; exit 1; }
+[ "$SIF" = none ] || [ -f "$SIF" ] || { echo "imagem nao encontrada: $SIF" >&2; exit 1; }
 [ -f "$COMMITS" ] || { echo "lista de commits nao encontrada: $COMMITS" >&2; exit 1; }
 # o laco muda de diretorio: caminhos viram absolutos aqui, ou param de resolver
-SIF=$(readlink -f "$SIF"); COMMITS=$(readlink -f "$COMMITS")
+[ "$SIF" = none ] || SIF=$(readlink -f "$SIF")
+COMMITS=$(readlink -f "$COMMITS")
 [ -e "$SRC" ] && SRC=$(readlink -f "$SRC")
 
 # --- node probe --------------------------------------------------------------
-eval "$("$HERE/check-node.sh" --sif "$SIF" 2>/dev/null | grep -E '^(RUNTIME|RUNTIME_BIN|GPU_DEV|GFX_ARCH|WAVE32_FLAG|NPROC)=')" || true
-[ "${RUNTIME:-none}" != none ] || { echo "sem runtime de container" >&2; exit 1; }
+CN_ARGS=(); [ "$SIF" = none ] || CN_ARGS=(--sif "$SIF")
+eval "$("$HERE/check-node.sh" "${CN_ARGS[@]}" 2>/dev/null | grep -E '^(RUNTIME|RUNTIME_BIN|GPU_DEV|GFX_ARCH|WAVE32_FLAG|NPROC)=')" || true
+if [ "$SIF" != none ]; then
+  [ "${RUNTIME:-none}" != none ] || { echo "sem runtime de container" >&2; exit 1; }
+fi
 [ "${GPU_DEV:-no}" = yes ]     || { echo "sem /dev/kfd (driver amdgpu)" >&2; exit 1; }
 [ -n "${GFX_ARCH:-}" ]         || { echo "gfx nao detectado" >&2; exit 1; }
 export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0}
@@ -72,7 +79,14 @@ export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0}
 OUTDIR=${OUTDIR:-"$PWD/sweep_$(hostname -s)_$(date +%Y%m%d_%H%M%S)"}
 WORK="$OUTDIR/work"
 mkdir -p "$OUTDIR" "$WORK"
-inSIF() { "$RUNTIME_BIN" exec --rocm -B "$HOME" -B "$OUTDIR" "$SIF" bash -c "$1"; }
+# no modo nativo o toolchain do host responde; ROCM_PATH aponta a instalacao
+# (module load rocm costuma exportar; /opt/rocm e o default dos pacotes)
+ROCMP=${ROCM_PATH:-/opt/rocm}
+if [ "$SIF" = none ]; then
+  inSIF() { PATH="$ROCMP/bin:$PATH" bash -c "$1"; }
+else
+  inSIF() { "$RUNTIME_BIN" exec --rocm -B "$HOME" -B "$OUTDIR" "$SIF" bash -c "$1"; }
+fi
 
 # --- code --------------------------------------------------------------------
 if [ ! -d "$WORK/arcto/.git" ]; then
@@ -100,10 +114,10 @@ hipcc --offload-arch='"$GFX_ARCH"' /tmp/hipmin.hip -o /tmp/hipmin 2>/dev/null &&
 
 # print completo do no junto de cada campanha: a pergunta "isso foi a CPU?"
 # chega meses depois, quando o no ja foi reimageado
-"$HERE/snapshot-node.sh" --out "$OUTDIR/node-snapshot" --sif "$SIF" --results-dir "$OUTDIR" >&2 || true
+"$HERE/snapshot-node.sh" --out "$OUTDIR/node-snapshot" "${CN_ARGS[@]}" --results-dir "$OUTDIR" >&2 || true
 
 { echo "date=$(date -Is)"; echo "host=$(hostname)"; echo "gfx=$GFX_ARCH"
-  echo "sif=$SIF"; echo "rocm=$(inSIF 'cat /opt/rocm/.info/version')"
+  echo "sif=$SIF"; echo "rocm=$(inSIF "cat $ROCMP/.info/version 2>/dev/null || hipcc --version | head -1")"
   echo "source=$SRC"; echo "commits_file=$COMMITS"
   echo "reps=$REPS chunk=$CHUNK input=$INPUT_REL dup=$DUP"
   echo "HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES"; } > "$OUTDIR/provenance.txt"
@@ -130,7 +144,7 @@ grep -vE '^\s*(#|$)' "$COMMITS" | while read -r REF FLAGS; do
   echo "[$IDX] $TAG  ($(git log -1 --format=%s | cut -c1-60))  flags:$ALLFLAGS"
   if [ ! -x "$B/bin/benchmark_lz4_chunked" ]; then
     inSIF "cd $WORK/arcto && cmake -S . -B $B \
-      -D CMAKE_PREFIX_PATH=/opt/rocm -D CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+      -D CMAKE_PREFIX_PATH=$ROCMP -D CMAKE_POLICY_VERSION_MINIMUM=3.5 \
       -D CMAKE_HIP_ARCHITECTURES=$GFX_ARCH -D CMAKE_BUILD_TYPE=Release \
       -D BUILD_BENCHMARKS=ON -D BUILD_TESTS=OFF \
       -D CMAKE_HIP_FLAGS='$ALLFLAGS' -D CMAKE_CXX_FLAGS='$ALLFLAGS' \
@@ -144,14 +158,14 @@ grep -vE '^\s*(#|$)' "$COMMITS" | while read -r REF FLAGS; do
   # gate primeiro: escada completa em bytes exatos
   for F in tests/data/*.bin; do
     FN=$(basename "$F" .bin)
-    inSIF "cd $WORK/arcto && LD_LIBRARY_PATH=$B/lib:/opt/rocm/lib \
+    inSIF "cd $WORK/arcto && LD_LIBRARY_PATH=$B/lib:$ROCMP/lib \
       $B/bin/benchmark_lz4_chunked -f $F -p $CHUNK -w 1 -i 2 -c true -g 0 -x 64" \
       > "$OUTDIR/ratio_${TAG}_${FN}.csv" 2>/dev/null
   done
   echo "[$IDX] gate $TAG registrado"
 
   # vazao por repeticao
-  inSIF "cd $WORK/arcto && LD_LIBRARY_PATH=$B/lib:/opt/rocm/lib \
+  inSIF "cd $WORK/arcto && LD_LIBRARY_PATH=$B/lib:$ROCMP/lib \
     ARCTO_PER_REP_CSV=$OUTDIR/perrep.csv ARCTO_PER_REP_TAG=$TAG \
     $B/bin/benchmark_lz4_chunked -f $INPUT_REL -p $CHUNK -x $DUP -w 3 -i $REPS -c true -g 0" \
     > "$OUTDIR/${TAG}_perf.csv" 2> "$OUTDIR/${TAG}_perf.err"
