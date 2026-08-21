@@ -1,0 +1,4 @@
+kernel.perf_event_paranoid = 
+vm.swappiness = 
+kernel.numa_balancing = 
+vm.overcommit_memory = 

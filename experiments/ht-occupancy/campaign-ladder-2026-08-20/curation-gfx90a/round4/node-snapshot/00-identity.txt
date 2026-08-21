@@ -1,0 +1,3 @@
+larochette-4.luxembourg.grid5000.fr
+2026-08-21T20:47:27+02:00
+ 20:47:27 up  1:44,  1 user,  load average: 0.16, 0.86, 1.05

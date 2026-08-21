@@ -1,0 +1,7 @@
+host:    lunaris  (2026-08-21T15:47:38-03:00)
+so:      Debian GNU/Linux 12 (bookworm)  kernel 6.1.0-49-amd64
+cpu:     AMD Ryzen Threadripper PRO 5965WX 24-Cores  x48
+mem:     252 GiB
+governor:performance  smt:on
+gpu:     AMD (gfx1100)  driver amdgpu 
+result:  /ssd/cakunas/tooling-test/curation4_gfx1100 em /dev/nvme1n1p1 ext4

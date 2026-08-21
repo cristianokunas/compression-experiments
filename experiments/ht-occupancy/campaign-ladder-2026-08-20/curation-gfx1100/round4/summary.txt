@@ -1,0 +1,16 @@
+== vazao de compressao (mediana [Q1-Q3]) ==
+  78efd62                 31.88 GB/s  [31.26 - 32.07]  n=30
+  e9238c2                 31.92 GB/s  [31.63 - 32.02]  n=30  1.001x vs anterior
+  5ecada6                 31.85 GB/s  [31.31 - 32.01]  n=30  0.998x vs anterior
+  ganho total 5ecada6 / 78efd62: 1.00x
+
+== portao: bytes exatos por arquivo da escada ==
+     synth_binary_1mb             78efd62=18669562 e9238c2=18669562 5ecada6=18669562
+     synth_random_1mb             78efd62=61056832 e9238c2=61056832 5ecada6=61056832
+     synth_zeros_1mb              78efd62=247776 e9238c2=247776 5ecada6=247776
+     tti_64x64x64_mid             78efd62=61056658 e9238c2=61056658 5ecada6=61056658
+     tti_rsf_64x64x64_t000        78efd62=247776 e9238c2=247776 5ecada6=247776
+     tti_rsf_64x64x64_t050        78efd62=61056832 e9238c2=61056832 5ecada6=61056832
+
+('!!' = bytes mudaram entre commits: compare com a linha de base da
+ tentativa antes de aceitar; mudanca de razao e o sinal de falha silenciosa)

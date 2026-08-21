@@ -1,0 +1,2 @@
+model name	: AMD EPYC 7642 48-Core Processor
+96

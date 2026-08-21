@@ -1,0 +1,24 @@
+WARNING: While finding ROCm bind points: could not retrieve ld cache: exec: "/usr/sbin/ldconfig.real": stat /usr/sbin/ldconfig.real: no such file or directory
+WARNING: Could not find any nv files on this host!
+WARNING: Could not find any nv libraries on this host!
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+7.0.1
+HIP version: 7.0.51831-a3e329ad8
+AMD clang version 20.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-7.0.1 25314 f4087f6b428f0e6f575ebac8a8a724dab123d06e)
+
+
+=========================================== ROCm System Management Interface ===========================================
+===================================================== Concise Info =====================================================
+Device  Node  IDs              Temp    Power     Partitions          SCLK    MCLK    Fan     Perf  PwrCap  VRAM%  GPU%  
+[3m              (DID,     GUID)  (Edge)  (Socket)  (Mem, Compute, ID)                                                     [0m
+========================================================================================================================
+0       5     0x66a1,   4670   26.0°C  17.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+1       6     0x66a1,   59003  28.0°C  18.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+2       7     0x66a1,   4943   30.0°C  17.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+3       8     0x66a1,   34443  29.0°C  17.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+4       3     0x66a1,   46938  27.0°C  17.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+5       4     0x66a1,   34072  27.0°C  20.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+6       1     0x66a1,   45870  29.0°C  21.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+7       2     0x66a1,   9962   29.0°C  21.0W     N/A, N/A, 0         930Mhz  350Mhz  14.51%  auto  225.0W  0%     0%    
+========================================================================================================================
+================================================= End of ROCm SMI Log ==================================================

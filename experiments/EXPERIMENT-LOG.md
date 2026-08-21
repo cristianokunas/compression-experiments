@@ -729,3 +729,50 @@ Veredictos por peça, medidos no tip:
   Round 4 em andamento testa o wave32-only (`61218f5`, rótulo suspeito), a
   reconstrução integral (sanity do método cherry-pick) e a candidata curada
   `main+E02+E04+claim+O1+O2` nas três GPUs.
+
+### E17 (fim) — o mapa de essencialidade completo e a linhagem curada (2026-08-21)
+
+Rodadas 4-5 fecham todas as células. Sanity da reconstrução por cherry-pick
+passou nas três GPUs (C6 = v10 dentro do ruído), então os add-one-in medem as
+peças, não artefatos de reconstrução. Dados em
+`campaign-ladder-2026-08-20/curation-*/round{4,5}/`, bytes idênticos em tudo.
+
+| linhagem | gfx1100 | gfx90a | gfx906 |
+|---|---|---|---|
+| C7 = E02+E04+claim+O1+O2 | 31.88 | 69.15 | 31.91 |
+| C5 = C4+E08 | 31.92 | 69.19 | 31.88 |
+| C6 = reconstrução integral | 31.85 | 79.96 | 33.04 |
+| claim sem E02 (`46eac67`) | 32.29 | — | — |
+| E02 sem claim (`86df633`) | 34.49 | — | — |
+| **C9 = C7+E05 (vgpr)** | — | **79.97** | **32.97** |
+| C10 = C7+E03 (guard) | — | 69.18 | 31.92 |
+| referências: vMin+E04 / v10 | 35.11 / 31.75 | — / 80.37 | — / 32.41 |
+
+Veredictos finais por peça, no tip:
+
+- **E04 + O1 + O2: o núcleo, essencial nas três.**
+- **claim (`df13f11`): essencial wave64 (6.7x/5.8x), custa −8.0 % no wave32** —
+  não pelo LDS (o código já tem `#elif defined(USE_WARPSIZE_32)`), mas porque o
+  commit também reescreveu a rotação wave32 (contrato earliest-twin com
+  `CLZ(BREV(m))`). O gate correto é restaurar a rotação wave32 original.
+- **E02 (`__restrict__`): essencial wave64 (+18.5 %/+12.7 %), custa −1.8 % no
+  wave32.** Vira macro condicionada à largura de wave.
+- **E05 (pino 64 VGPR): essencial wave64, mas só em interação com E02**
+  (sozinho +0.3 %/−5.2 %; com restrict presente, +15.6 %/+3.3 %). O restrict
+  sobe a pressão de registradores e o pino devolve a ocupância. Segunda
+  interação de par documentada pelo loop (a primeira: E04×LDS/tabela pequena).
+- **E01 (launch_bounds): neutro em todo o mapa.** Fica como higiene (documenta
+  os block sizes reais), não como otimização.
+- **E03 (guard de wavefront): zero de desempenho (C10 = C7 exato).** Fica como
+  guarda de correção da API.
+- **E08 (wave32-only): neutro na compressão em todo o mapa.** Fica pelo ganho
+  de descompressão wave32 medido em julho (+20 % zeros no gfx1100) — atenção:
+  o sumário do sweep olha compressão; não descartar peça de decomp por ele.
+
+**Linhagem curada de produção** (a implementar como branch curado):
+núcleo E04+O1+O2 em todas; E02, E05 e o caminho claim gateados para wave64
+(wave32 mantém a rotação original de E04); E01 e E03 mantidos como higiene e
+guarda; E08 mantido (já autogateado). Previsto: ~35.1 / ~80.0 / ~33.0 GB/s
+contra 31.75 / 80.37 / 32.41 do v10 — +10.6 % no wave32, paridade no wave64,
+com três commits a menos de superfície não gateada. A escada re-medida dessa
+linhagem é a figura da tese; a escada histórica fica como registro do processo.

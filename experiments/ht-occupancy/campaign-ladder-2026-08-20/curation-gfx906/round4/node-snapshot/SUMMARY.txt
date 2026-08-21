@@ -1,0 +1,8 @@
+host:    neowise-1.lyon.grid5000.fr  (2026-08-21T20:47:37+02:00)
+so:      Debian GNU/Linux 11 (bullseye)  kernel 5.10.0-38-amd64
+cpu:     AMD EPYC 7642 48-Core Processor  x96
+mem:     504 GiB
+governor:performance  smt:on
+gpu:     AMD (gfx906)  driver amdgpu 
+gpu:     NVIDIA NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.
+result:  /home/ckunas/curation_4_gfx906 em nfs:/export/home/ckunas nfs

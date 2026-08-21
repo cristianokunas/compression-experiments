@@ -1,0 +1,11 @@
+smt: on
+boost: 1 no_turbo: 
+policy0: governor=performance cur=3174260 min=1800000 max=3800000
+policy1: governor=performance cur=4520588 min=1800000 max=3800000
+policy10: governor=performance cur=3314265 min=1800000 max=3800000
+policy11: governor=performance cur=3800000 min=1800000 max=3800000
+policy12: governor=performance cur=3627902 min=1800000 max=3800000
+policy13: governor=performance cur=2459137 min=1800000 max=3800000
+policy14: governor=performance cur=3622824 min=1800000 max=3800000
+policy15: governor=performance cur=3025691 min=1800000 max=3800000
+(politicas: 48)

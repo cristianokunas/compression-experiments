@@ -1,0 +1,1 @@
+sda: scheduler=[none] mq-deadline  rotational=0 read_ahead_kb=128

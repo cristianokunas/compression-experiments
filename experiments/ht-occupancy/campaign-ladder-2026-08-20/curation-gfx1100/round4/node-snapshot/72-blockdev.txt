@@ -1,0 +1,2 @@
+nvme0n1: scheduler=[none] mq-deadline  rotational=0 read_ahead_kb=128
+nvme1n1: scheduler=[none] mq-deadline  rotational=0 read_ahead_kb=128

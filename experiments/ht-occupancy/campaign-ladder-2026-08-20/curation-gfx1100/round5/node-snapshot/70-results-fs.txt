@@ -1,0 +1,5 @@
+Filesystem     Type  Size  Used Avail Use% Mounted on
+/dev/nvme1n1p1 ext4  916G  370G  500G  43% /ssd
+
+TARGET SOURCE         FSTYPE OPTIONS
+/ssd   /dev/nvme1n1p1 ext4   rw,noatime,discard,errors=remount-ro
